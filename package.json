@@ -1,0 +1,100 @@
+{
+  "name": "@openmirai/openapi-codegen",
+  "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openmirai/openapi-codegen.git"
+  },
+  "bin": {
+    "openapi-codegen": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./adapters/axios": {
+      "types": "./dist/adapters/axios/index.d.ts",
+      "import": "./dist/adapters/axios/index.js",
+      "default": "./dist/adapters/axios/index.js"
+    },
+    "./adapters/fetch": {
+      "types": "./dist/adapters/fetch/index.d.ts",
+      "import": "./dist/adapters/fetch/index.js",
+      "default": "./dist/adapters/fetch/index.js"
+    },
+    "./http": {
+      "types": "./dist/http/types.d.ts",
+      "import": "./dist/http/types.js",
+      "default": "./dist/http/types.js"
+    },
+    "./validation/zod": {
+      "types": "./dist/validation/zod.d.ts",
+      "import": "./dist/validation/zod.js",
+      "default": "./dist/validation/zod.js"
+    },
+    "./routes": {
+      "types": "./dist/routes/index.d.ts",
+      "import": "./dist/routes/index.js",
+      "default": "./dist/routes/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc -p tsconfig.json --pretty false && tsc -p tsconfig.tools.json --pretty false",
+    "format": "oxfmt --check .",
+    "format:fix": "oxfmt --write .",
+    "lint": "oxlint . && oxfmt --check .",
+    "lint:fix": "oxlint --fix --fix-suggestions . && oxfmt --write .",
+    "pretest": "pnpm build",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "prepare": "husky",
+    "release": "release-it",
+    "verify": "pnpm format && pnpm lint && pnpm typecheck && pnpm build && pnpm test:coverage"
+  },
+  "dependencies": {
+    "chalk": "5.6.2"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.1",
+    "@commitlint/config-conventional": "21.2.0",
+    "@commitlint/types": "21.2.0",
+    "@tsconfig/node24": "24.0.4",
+    "@types/node": "24.13.3",
+    "@vitest/coverage-v8": "4.1.11",
+    "husky": "9.1.7",
+    "lint-staged": "17.0.8",
+    "oxfmt": "0.63.0",
+    "oxlint": "1.74.0",
+    "release-it": "21.0.2",
+    "tsdown": "0.22.14",
+    "tsx": "4.23.1",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
+  },
+  "peerDependencies": {
+    "axios": "^1"
+  },
+  "peerDependenciesMeta": {
+    "axios": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=10"
+  },
+  "packageManager": "pnpm@10.13.1"
+}

@@ -1,0 +1,9 @@
+dist/
+node_modules/
+coverage/
+.openapi-codegen/
+test/fixtures/layouts/
+*.tsbuildinfo
+.tmp/
+openapi-codegen.local.json
+.env

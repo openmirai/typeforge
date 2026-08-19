@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node", "vitest/globals"]
+  },
+  "include": [
+    "src/**/__tests__/**/*.ts",
+    "test/**/*.ts",
+    "vitest.config.ts",
+    "tsdown.config.ts",
+    "commitlint.config.ts",
+    "lint-staged.config.ts"
+  ],
+  "exclude": ["test/fixtures/layouts/**"]
+}

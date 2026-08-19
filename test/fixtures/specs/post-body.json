@@ -1,0 +1,79 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "Acme Widget Mutations", "version": "3.0.0" },
+  "paths": {
+    "/api/acme/v3/widgets": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "enabled": { "type": "boolean" }
+                },
+                "required": ["title"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": { "code": { "type": "string" } }
+                    },
+                    "timestamp": { "type": "string" }
+                  },
+                  "required": ["success", "timestamp"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/acme/v3/widgets/{slug}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "in": "query",
+            "name": "cascade",
+            "schema": { "type": "boolean" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "type": "null" },
+                    "timestamp": { "type": "string" }
+                  },
+                  "required": ["success", "timestamp"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

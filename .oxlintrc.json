@@ -1,0 +1,134 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "plugins": ["typescript", "unicorn", "oxc", "import", "vitest"],
+  "ignorePatterns": [
+    "**/coverage/**",
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/test/fixtures/**",
+    "**/test/snapshots/**",
+    "**/generated/**",
+    "**/.tmp/**",
+    "**/*.tsbuildinfo",
+    "pnpm-lock.yaml"
+  ],
+  "rules": {
+    "arrow-body-style": "error",
+    "curly": "error",
+    "eqeqeq": [
+      "warn",
+      "always",
+      {
+        "null": "ignore"
+      }
+    ],
+    "import/consistent-type-specifier-style": "error",
+    "import/no-duplicates": "error",
+    "import/newline-after-import": "error",
+    "import/no-unassigned-import": "off",
+    "no-console": "warn",
+    "no-control-regex": "warn",
+    "no-debugger": "error",
+    "no-duplicate-imports": "off",
+    "no-empty-pattern": "error",
+    "no-extra-boolean-cast": "error",
+    "no-implicit-coercion": [
+      "warn",
+      {
+        "allow": ["!!"]
+      }
+    ],
+    "no-multi-assign": "error",
+    "no-nested-ternary": "error",
+    "no-param-reassign": "error",
+    "no-unneeded-ternary": "error",
+    "no-unused-expressions": "error",
+    "no-unused-vars": "warn",
+    "no-useless-return": "warn",
+    "no-var": "error",
+    "object-shorthand": "error",
+    "prefer-const": "error",
+    "prefer-template": "error",
+    "typescript/array-type": [
+      "error",
+      {
+        "default": "generic",
+        "readonly": "generic"
+      }
+    ],
+    "typescript/consistent-type-definitions": ["error", "interface"],
+    "typescript/consistent-type-imports": "error",
+    "typescript/no-duplicate-enum-values": "warn",
+    "typescript/no-duplicate-type-constituents": "error",
+    "typescript/no-empty-interface": "warn",
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-extra-non-null-assertion": "error",
+    "typescript/no-inferrable-types": "error",
+    "typescript/no-non-null-assertion": "warn",
+    "typescript/no-restricted-types": [
+      "error",
+      {
+        "types": {
+          "Object": "Use object or a specific interface instead.",
+          "Function": "Use a specific function signature instead.",
+          "Boolean": "Use boolean instead.",
+          "Number": "Use number instead.",
+          "String": "Use string instead."
+        }
+      }
+    ],
+    "typescript/no-unnecessary-type-assertion": "warn",
+    "typescript/prefer-as-const": "error",
+    "typescript/no-useless-empty-export": "off",
+    "unicorn/filename-case": "off",
+    "unicorn/consistent-function-scoping": "off",
+    "unicorn/no-await-in-promise-methods": "warn",
+    "unicorn/no-empty-file": "off",
+    "unicorn/require-module-specifiers": "off",
+    "oxc/only-used-in-recursion": "warn",
+    "unicorn/no-nested-ternary": "error",
+    "unicorn/no-null": "off",
+    "vitest/no-conditional-expect": "warn",
+    "vitest/expect-expect": "warn",
+    "vitest/no-conditional-tests": "warn",
+    "vitest/no-focused-tests": "error",
+    "vitest/valid-title": "warn",
+    "vitest/require-mock-type-parameters": "off"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.config.*"],
+      "rules": {
+        "no-restricted-imports": "off",
+        "no-restricted-properties": "off",
+        "unicorn/prefer-string-raw": "off"
+      }
+    },
+    {
+      "files": ["scripts/**"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["**/*.d.ts"],
+      "rules": {
+        "no-unused-vars": "off",
+        "typescript/triple-slash-reference": "off",
+        "unicorn/require-module-specifiers": "off",
+        "typescript/no-useless-empty-export": "off"
+      }
+    },
+    {
+      "files": ["**/__tests__/**/*", "**/*.test.*"],
+      "rules": {
+        "import/no-unassigned-import": "off",
+        "no-constant-binary-expression": "off"
+      }
+    }
+  ]
+}

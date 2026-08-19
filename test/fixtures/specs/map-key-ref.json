@@ -1,0 +1,71 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "Acme Registry API", "version": "3.0.0" },
+  "paths": {
+    "/api/acme/v3/registry/clauses/{variant}": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "variant",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["ALPHA_NOTICE", "BETA_NOTICE"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "type": "object" },
+                    "timestamp": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/acme/v3/registry/clauses": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "entries": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "locale": { "type": "string" }
+                            }
+                          },
+                          "x-map-key-ref": "#/paths/~1api~1acme~1v3~1registry~1clauses~1{variant}/put/parameters/0/schema"
+                        }
+                      }
+                    },
+                    "timestamp": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

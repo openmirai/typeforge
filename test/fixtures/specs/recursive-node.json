@@ -1,0 +1,33 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "Acme Branch API", "version": "3.0.0" },
+  "components": {
+    "schemas": {
+      "BranchNode": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string" },
+          "children": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/BranchNode" }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/acme/v3/branches": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BranchNode" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

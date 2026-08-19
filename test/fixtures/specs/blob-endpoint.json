@@ -1,0 +1,48 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "Acme Blob API", "version": "3.0.0" },
+  "paths": {
+    "/api/acme/v3/blobs/{handle}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "handle",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "handle": { "type": "string" },
+                        "uri": { "type": "string" },
+                        "payload": {
+                          "type": "object",
+                          "properties": {
+                            "filename": { "type": "string" },
+                            "bytes": { "type": "number" },
+                            "mime": { "type": "string" }
+                          }
+                        }
+                      }
+                    },
+                    "timestamp": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

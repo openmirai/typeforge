@@ -1,0 +1,58 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "Acme Mixed Envelope API", "version": "3.0.0" },
+  "paths": {
+    "/api/acme/v3/widgets": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "timestamp": { "type": "string" }
+                  },
+                  "required": ["success", "timestamp"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/acme/v3/plain/{token}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": { "type": "string" },
+                    "caption": { "type": "string" }
+                  },
+                  "required": ["token"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

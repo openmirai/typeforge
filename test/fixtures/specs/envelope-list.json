@@ -1,0 +1,81 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "Acme Widgets API", "version": "3.0.0" },
+  "paths": {
+    "/api/acme/v3/widgets": {
+      "get": {
+        "operationId": "listWidgets",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": { "type": "string" },
+                          "title": { "type": "string" }
+                        },
+                        "required": ["code", "title"]
+                      }
+                    },
+                    "timestamp": { "type": "string" }
+                  },
+                  "required": ["success", "timestamp"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/acme/v3/widgets/{slug}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "code": { "type": "string" },
+                        "title": { "type": "string" }
+                      },
+                      "required": ["code", "title"]
+                    },
+                    "timestamp": { "type": "string" }
+                  },
+                  "required": ["success", "timestamp"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
