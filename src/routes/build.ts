@@ -1,13 +1,10 @@
-import { appendSearchParams, type SearchParamValue } from "./search-params";
-import type {
-  BuildRouteFn,
-  RouteHandlers,
-  RouteKeyFromParams,
-} from "./types";
+import { appendSearchParams } from "./search-params";
+import type { SearchParamValue } from "./search-params";
+import type { BuildRouteFn, RouteHandlers, RouteKeyFromParams } from "./types";
 
-type RouteParamsShape = {
+interface RouteParamsShape {
   [routeKey: string]: undefined | object;
-};
+}
 
 export type { RouteParamsShape };
 

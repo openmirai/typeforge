@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  buildRouteFromHandlers,
-  createRouteHandlers,
-} from "../build";
+import { buildRouteFromHandlers, createRouteHandlers } from "../build";
 
 describe("createRouteHandlers", () => {
   const targets = {
@@ -30,9 +27,9 @@ describe("createRouteHandlers", () => {
 
   it("appends optional search params", () => {
     expect(Routes.STATIC).toBe("/widgets");
-    expect(
-      Routes.BY_SLUG({ slug: "acme" }, { page: 1, active: true })
-    ).toBe("/widgets/acme?page=1&active=true");
+    expect(Routes.BY_SLUG({ slug: "acme" }, { page: 1, active: true })).toBe(
+      "/widgets/acme?page=1&active=true"
+    );
   });
 });
 

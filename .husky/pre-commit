@@ -1,1 +1,5 @@
+if git diff --cached --quiet; then
+  exit 0
+fi
+
 pnpm exec lint-staged

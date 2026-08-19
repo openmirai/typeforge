@@ -1,4 +1,4 @@
-import type { IRPath } from "../../parser/types";
+import type { IRPath, IRSchema } from "../../parser/types";
 import {
   renderPathParamType,
   resolvePathParamSchemas,
@@ -15,7 +15,7 @@ interface RouteEntry {
   enumName: string;
   routeValue: string;
   pathParamNames: Array<string>;
-  pathParamSchemas: Map<string, import("../../parser/types").IRSchema>;
+  pathParamSchemas: Map<string, IRSchema>;
 }
 
 function extractPathParamNames(routePath: string): Array<string> {
@@ -77,7 +77,7 @@ export function emitRoutesFile(options: RoutesEmitterOptions): string {
     "import {",
     "  buildRouteFromHandlers,",
     "  createRouteHandlers,",
-    "} from \"@openmirai/openapi-codegen/routes\";",
+    '} from "@openmirai/openapi-codegen/routes";',
     "",
     ...renderRouteParamsType(entries),
     `export enum ${options.routeEnumName} {`,
@@ -119,9 +119,7 @@ export function mergeRoutesFile(
   const paths = [...merged.entries()].map(([, value]) => ({
     cleanPath: value.replace(/:[^/]+/g, (match) => `{${match.slice(1)}}`),
     operations: [],
-    path: value.includes(":")
-      ? value.replace(/:([^/]+)/g, "{$1}")
-      : value,
+    path: value.includes(":") ? value.replace(/:([^/]+)/g, "{$1}") : value,
   }));
 
   return emitRoutesFile({

@@ -32,7 +32,7 @@ describe("output utils edge cases", () => {
 
     expect(result.changed).toEqual([filePath]);
     expect(result.written).toBe(0);
-    await expect(readFile(filePath, "utf8")).rejects.toThrow();
+    await expect(readFile(filePath, "utf8")).rejects.toThrow("ENOENT");
     await rm(root, { force: true, recursive: true });
   });
 });

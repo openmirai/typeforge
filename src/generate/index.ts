@@ -81,8 +81,7 @@ export function buildGenerateContext(
     functionsDir: join(generatedDir, "functions"),
     generatedDir,
     hasQueryScope:
-      sourceConfig.tanstackQuery === true &&
-      hasQueryScopeFile(cwd, apiRoot),
+      sourceConfig.tanstackQuery === true && hasQueryScopeFile(cwd, apiRoot),
     httpMode: detectHttpMode(cwd, apiRoot),
     routesFile: join(generatedDir, "routes.ts"),
     snapshotPath: join(sourceDir, "spec.json"),

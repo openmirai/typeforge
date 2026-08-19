@@ -1,4 +1,9 @@
-import type { HttpMethod, IROperation, IRPath } from "../../parser/types";
+import type {
+  HttpMethod,
+  IROperation,
+  IRPath,
+  IRSchema,
+} from "../../parser/types";
 import { relativeImportFromFunctionFile } from "../../utils/imports";
 import { pathToEnumName, pathToFunctionName } from "../../utils/naming";
 import {
@@ -24,10 +29,7 @@ function extractPathParams(routePath: string): Array<string> {
   return matches.map((match) => match.slice(1, -1));
 }
 
-function getTypeImportPath(
-  cleanPath: string,
-  method: HttpMethod
-): string {
+function getTypeImportPath(cleanPath: string, method: HttpMethod): string {
   const normalizedPath = cleanPath
     .replace(/\{([^}]+)\}/g, "[$1]")
     .split("/")
@@ -41,15 +43,12 @@ function getTypeImportPath(
 
 function renderOperationPathParamType(
   operation: IROperation,
-  schemas: Map<string, import("../../parser/types").IRSchema>,
+  schemas: Map<string, IRSchema>,
   param: string
 ): string {
   const pathParam = operation.pathParams.find((entry) => entry.name === param);
   if (pathParam !== undefined) {
-    return renderPathParamType(
-      new Map([[param, pathParam.schema]]),
-      param
-    );
+    return renderPathParamType(new Map([[param, pathParam.schema]]), param);
   }
   return renderPathParamType(schemas, param);
 }

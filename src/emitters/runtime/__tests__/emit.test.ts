@@ -20,7 +20,7 @@ describe("emitRuntimeFile", () => {
       httpMode: "injected",
     });
 
-    expect(content).toContain('export type { HTTPFetch, HTTPFetchConfig }');
+    expect(content).toContain("export type { HTTPFetch, HTTPFetchConfig }");
     expect(content).not.toContain("export { httpFetch }");
   });
 
