@@ -6,7 +6,7 @@ export type { ResponseValidator } from "./validate";
 export { coerceResponseData, ResponseValidationError } from "./validate";
 
 export interface HTTPFetchConfig<
-  TParams extends QueryParams = QueryParams,
+  TParams extends object = QueryParams,
   TResponse = unknown,
 > {
   signal?: AbortSignal;
@@ -16,26 +16,26 @@ export interface HTTPFetchConfig<
 }
 
 export interface HTTPFetch {
-  get<TResponse, TParams extends QueryParams = QueryParams>(
+  get<TResponse, TParams extends object = QueryParams>(
     route: string,
     config?: HTTPFetchConfig<TParams, TResponse>
   ): Promise<{ data: TResponse }>;
-  post<TResponse, TBody = unknown, TParams extends QueryParams = QueryParams>(
-    route: string,
-    body: TBody,
-    config?: HTTPFetchConfig<TParams, TResponse>
-  ): Promise<{ data: TResponse }>;
-  put<TResponse, TBody = unknown, TParams extends QueryParams = QueryParams>(
+  post<TResponse, TBody = unknown, TParams extends object = QueryParams>(
     route: string,
     body: TBody,
     config?: HTTPFetchConfig<TParams, TResponse>
   ): Promise<{ data: TResponse }>;
-  patch<TResponse, TBody = unknown, TParams extends QueryParams = QueryParams>(
+  put<TResponse, TBody = unknown, TParams extends object = QueryParams>(
     route: string,
     body: TBody,
     config?: HTTPFetchConfig<TParams, TResponse>
   ): Promise<{ data: TResponse }>;
-  delete<TResponse, TParams extends QueryParams = QueryParams>(
+  patch<TResponse, TBody = unknown, TParams extends object = QueryParams>(
+    route: string,
+    body: TBody,
+    config?: HTTPFetchConfig<TParams, TResponse>
+  ): Promise<{ data: TResponse }>;
+  delete<TResponse, TParams extends object = QueryParams>(
     route: string,
     config?: HTTPFetchConfig<TParams, TResponse>
   ): Promise<{ data: TResponse }>;

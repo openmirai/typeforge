@@ -35,9 +35,10 @@ describe("emitFunctionFiles", () => {
     expect(file?.content).toContain("import { httpFetch, Routes }");
     expect(file?.content).toContain("params?: GETApiAcmeV3WidgetsParams");
     expect(file?.content).toContain(
-      "httpFetch.get<GETApiAcmeV3WidgetsResponse>(Routes.API_ACME_V3_WIDGETS, { ...config, params, signal });"
+      "httpFetch.get<GETApiAcmeV3WidgetsResponse, GETApiAcmeV3WidgetsParams>(Routes.API_ACME_V3_WIDGETS, { ...config, params, signal });"
     );
     expect(file?.content).toContain("return data;");
+    expect(file?.content).not.toContain("Response | undefined");
     expect(file?.content).not.toMatch(/\bas\s+/);
   });
 
@@ -60,6 +61,50 @@ describe("emitFunctionFiles", () => {
     expect(del?.content).toContain("params?: DELETEApiAcmeV3WidgetsSlugParams");
   });
 
+  it("requires params when the operation has a required query parameter", () => {
+    const source = parseSpec(
+      JSON.parse(
+        readFileSync(join(fixtureRoot, "specs/envelope-list.json"), "utf8")
+      ),
+      { pathPrefix: "/api/acme/v3" }
+    );
+    const operation = source.paths[0]?.operations[0];
+    if (operation?.queryParams[0] !== undefined) {
+      operation.queryParams[0].required = true;
+    }
+
+    const [file] = emitFunctionFiles(baseOptions(source.paths));
+    expect(file?.content).toContain("params: GETApiAcmeV3WidgetsParams");
+    expect(file?.content).not.toContain("params?: GETApiAcmeV3WidgetsParams");
+  });
+
+  it("passes request bodies through DELETE config", () => {
+    const source = parseSpec(
+      JSON.parse(
+        readFileSync(join(fixtureRoot, "specs/post-body.json"), "utf8")
+      ),
+      { pathPrefix: "/api/acme/v3" }
+    );
+    const operation = source.paths[1]?.operations[0];
+    if (operation !== undefined) {
+      operation.requestBody = {
+        required: true,
+        schema: {
+          kind: "object",
+          properties: {
+            force: { required: true, schema: { kind: "boolean" } },
+          },
+        },
+      };
+    }
+
+    const file = emitFunctionFiles(baseOptions(source.paths)).find((entry) =>
+      entry.relativePath.endsWith("DELETE.ts")
+    );
+    expect(file?.content).toContain("body: DELETEApiAcmeV3WidgetsSlugBody");
+    expect(file?.content).toContain("data: body, params, signal");
+  });
+
   it("uses injected http prop when httpMode is injected", () => {
     const source = parseSpec(
       JSON.parse(
@@ -73,7 +118,7 @@ describe("emitFunctionFiles", () => {
     });
     expect(file?.content).toContain("http: HTTPFetch");
     expect(file?.content).toContain(
-      "props.http.get<GETApiAcmeV3WidgetsResponse>(Routes.API_ACME_V3_WIDGETS"
+      "props.http.get<GETApiAcmeV3WidgetsResponse, GETApiAcmeV3WidgetsParams>(Routes.API_ACME_V3_WIDGETS"
     );
     expect(file?.content).not.toContain("import { httpFetch }");
   });
@@ -127,6 +172,13 @@ describe("emitFunctionFiles", () => {
     expect(file?.content).toContain("QueryOptions");
     expect(file?.content).not.toContain("@tanstack/react-query");
     expect(file?.content).toContain('from "../../../../../runtime"');
+
+    const itemFile = emitFunctionFiles({
+      ...baseOptions(source.paths),
+      hasQueryScope: true,
+    }).find((entry) => entry.relativePath.includes("[slug]"));
+    expect(itemFile?.content).toContain("const { queryScope } = props;");
+    expect(itemFile?.content).not.toContain(", params]");
   });
 
   it("defaults missing path params to string", () => {

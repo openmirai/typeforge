@@ -102,6 +102,7 @@ describe("emitTypeFiles", () => {
       file.relativePath.endsWith("widgets/GET.d.ts")
     );
     expect(listType?.content).toContain('SortParams<"name" | "createdAt">');
+    expect(listType?.content).not.toContain("Record<string");
   });
 
   it("emits alias body types and unknown responses", () => {

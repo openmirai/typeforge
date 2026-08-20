@@ -4,7 +4,7 @@ import { coerceResponseData } from "../../http/validate";
 import type { HTTPFetch, HTTPFetchConfig } from "../../http/types";
 import type { QueryParams } from "../../json/types";
 
-function toAxiosConfig<TParams extends QueryParams>(
+function toAxiosConfig<TParams extends object>(
   config?: HTTPFetchConfig<TParams, unknown>
 ): AxiosRequestConfig | undefined {
   if (config === undefined) {
@@ -24,9 +24,9 @@ function toAxiosConfig<TParams extends QueryParams>(
   return axiosConfig;
 }
 
-function mapResponse<TResponse>(
+function mapResponse<TResponse, TParams extends object>(
   data: unknown,
-  config?: HTTPFetchConfig<QueryParams, TResponse>
+  config?: HTTPFetchConfig<TParams, TResponse>
 ): { data: TResponse } {
   return {
     data: coerceResponseData<TResponse>(data, config?.validateResponse),
@@ -35,25 +35,21 @@ function mapResponse<TResponse>(
 
 export function createAxiosAdapter(instance: AxiosInstance): HTTPFetch {
   return {
-    delete: <TResponse, TParams extends QueryParams = QueryParams>(
+    delete: <TResponse, TParams extends object = QueryParams>(
       route: string,
       config?: HTTPFetchConfig<TParams, TResponse>
     ) =>
       instance
         .delete<TResponse>(route, toAxiosConfig(config))
         .then((response) => mapResponse(response.data, config)),
-    get: <TResponse, TParams extends QueryParams = QueryParams>(
+    get: <TResponse, TParams extends object = QueryParams>(
       route: string,
       config?: HTTPFetchConfig<TParams, TResponse>
     ) =>
       instance
         .get<TResponse>(route, toAxiosConfig(config))
         .then((response) => mapResponse(response.data, config)),
-    patch: <
-      TResponse,
-      TBody = unknown,
-      TParams extends QueryParams = QueryParams,
-    >(
+    patch: <TResponse, TBody = unknown, TParams extends object = QueryParams>(
       route: string,
       body: TBody,
       config?: HTTPFetchConfig<TParams, TResponse>
@@ -61,11 +57,7 @@ export function createAxiosAdapter(instance: AxiosInstance): HTTPFetch {
       instance
         .patch<TResponse>(route, body, toAxiosConfig(config))
         .then((response) => mapResponse(response.data, config)),
-    post: <
-      TResponse,
-      TBody = unknown,
-      TParams extends QueryParams = QueryParams,
-    >(
+    post: <TResponse, TBody = unknown, TParams extends object = QueryParams>(
       route: string,
       body: TBody,
       config?: HTTPFetchConfig<TParams, TResponse>
@@ -73,11 +65,7 @@ export function createAxiosAdapter(instance: AxiosInstance): HTTPFetch {
       instance
         .post<TResponse>(route, body, toAxiosConfig(config))
         .then((response) => mapResponse(response.data, config)),
-    put: <
-      TResponse,
-      TBody = unknown,
-      TParams extends QueryParams = QueryParams,
-    >(
+    put: <TResponse, TBody = unknown, TParams extends object = QueryParams>(
       route: string,
       body: TBody,
       config?: HTTPFetchConfig<TParams, TResponse>

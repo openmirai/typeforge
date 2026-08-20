@@ -148,18 +148,16 @@ function renderParamsInterface(
   }
 
   if (extendsParts.length > 0 && nonCommonParams.length === 0) {
-    return `export type ${typeName}Params = ${extendsParts.join(" & ")} & Record<string, string | number | boolean | null | undefined>;`;
+    return `export type ${typeName}Params = ${extendsParts.join(" & ")};`;
   }
 
   const lines: Array<string> = [];
   if (extendsParts.length > 0) {
     lines.push(
-      `export interface ${typeName}Params extends ${extendsParts.join(", ")}, Record<string, string | number | boolean | null | undefined> {`
+      `export interface ${typeName}Params extends ${extendsParts.join(", ")} {`
     );
   } else {
-    lines.push(
-      `export interface ${typeName}Params extends Record<string, string | number | boolean | null | undefined> {`
-    );
+    lines.push(`export interface ${typeName}Params {`);
   }
 
   for (const param of nonCommonParams) {
