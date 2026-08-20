@@ -103,6 +103,18 @@ describe("integration: monolith generate", () => {
       }),
       "utf8"
     );
+    mkdirSync(join(root, "packages/types"), { recursive: true });
+    writeFileSync(
+      join(root, "packages/types/tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: {
+          paths: {
+            "@mirai/types/src/*": ["./src/*"],
+          },
+        },
+      }),
+      "utf8"
+    );
 
     await generateForSource({ cwd: root, sourceKey: "core" });
 
@@ -119,6 +131,15 @@ describe("integration: monolith generate", () => {
     );
     expect(fn).toContain('from "@mirai/utils/src/api/core/generated/runtime"');
     expect(fn).not.toContain("../../../../");
+
+    const responseType = readFileSync(
+      join(typesDir, "api/acme/v3/widgets/GET.d.ts"),
+      "utf8"
+    );
+    expect(responseType).toContain(
+      'import("@mirai/types/src/api/core/base").BaseResponse'
+    );
+    expect(responseType).not.toContain("../../../../");
   });
 
   it("generates mixed envelope specs with per-operation wrapping", async () => {

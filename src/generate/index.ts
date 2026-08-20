@@ -245,6 +245,10 @@ export async function generateForSource(
   if (primaryEnvelope !== undefined) {
     typeEmitterOptions.sharedEnvelope = primaryEnvelope;
   }
+  const typesTsconfigPaths = loadTsconfigPaths(context.typesDir);
+  if (typesTsconfigPaths !== undefined) {
+    typeEmitterOptions.tsconfigPaths = typesTsconfigPaths;
+  }
   if (context.sourceConfig.maxRenderDepth !== undefined) {
     typeEmitterOptions.maxRenderDepth = context.sourceConfig.maxRenderDepth;
   }

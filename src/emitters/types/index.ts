@@ -8,7 +8,8 @@ import { DEFAULT_MAX_RENDER_DEPTH } from "../../config/types";
 import type { JsonObject } from "../../json/types";
 import type { KnownTypeRule } from "../../plugins/known-types/index";
 import type { IROperation, IRQueryParam, IRSource } from "../../parser/types";
-import { relativeImportPath } from "../../utils/imports";
+import type { TsconfigPathsConfig } from "../../utils/tsconfig-paths";
+import { resolveAliasAwareImport } from "../../utils/imports";
 import { renderSchemaType } from "../schema-renderer";
 import type { SchemaRenderContext } from "../schema-renderer";
 import { resolveRef } from "../resolve-schema";
@@ -30,6 +31,7 @@ export interface TypesEmitterOptions {
   resolveMapKeyRefs?: boolean;
   typesDir: string;
   baseFile: string;
+  tsconfigPaths?: TsconfigPathsConfig;
 }
 
 function createRenderContext(
@@ -323,10 +325,13 @@ export function emitTypeFiles(
       }
 
       const typeFile = `${options.typesDir}/${pathItem.cleanPath}/${operation.method.toUpperCase()}.d.ts`;
-      const baseImportPath = relativeImportPath(
-        typeFile,
-        options.baseFile.replace(/\.ts$/, "")
-      );
+      const baseImportPath = resolveAliasAwareImport({
+        fromAbsolutePath: typeFile,
+        toAbsolutePath: options.baseFile.replace(/\.ts$/, ""),
+        ...(options.tsconfigPaths === undefined
+          ? {}
+          : { tsconfigPaths: options.tsconfigPaths }),
+      });
 
       blocks.push(
         renderResponseType(

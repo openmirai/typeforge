@@ -177,10 +177,11 @@ Adapters implement `HTTPFetch` from `@openmirai/openapi-codegen/http` (or the ax
 
 ### 6. Path-alias aware imports
 
-Function files import types and `runtime` using:
+Generated function files import types and `runtime`, and generated response
+types import `base.ts`, using:
 
 1. `importBase` in `source.ts`, if set
-2. Else `compilerOptions.paths` from the nearest ancestor `tsconfig.json` with path aliases, starting at `functionsDir`
+2. Else `compilerOptions.paths` from the nearest ancestor `tsconfig.json` with path aliases, starting at the corresponding `functionsDir` or `typesDir`
 3. Else relative paths (`../../runtime`)
 
 ## Where files go
