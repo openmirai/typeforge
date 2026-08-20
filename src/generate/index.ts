@@ -19,12 +19,10 @@ import {
   analyzeEnvelope,
   buildBaseResponseInterface,
   diffEnvelopeFields,
+  getPrimaryEnvelopeShape,
   parseUserBaseResponse,
 } from "../envelope-guard/index";
-import {
-  formatDriftError,
-  formatMixedEnvelopeError,
-} from "../envelope-guard/diagnostic";
+import { formatDriftError } from "../envelope-guard/diagnostic";
 import { loadKnownTypeRules } from "../plugins/known-types/index";
 import { isJsonObject } from "../json/types";
 import { loadSpec, resolveSpecSource } from "../parser/loader";
@@ -99,13 +97,6 @@ function validateEnvelope(
   acceptBase: boolean
 ): { mode: ReturnType<typeof analyzeEnvelope>["mode"]; error?: string } {
   const analysis = analyzeEnvelope(source);
-
-  if (analysis.mode === "mixed") {
-    return {
-      error: formatMixedEnvelopeError(context.sourceKey, analysis.groups),
-      mode: analysis.mode,
-    };
-  }
 
   if (analysis.mode !== "shared" || analysis.shared === undefined) {
     return { mode: analysis.mode };
@@ -212,9 +203,10 @@ export async function generateForSource(
   const analysis = analyzeEnvelope(source);
   const outputFiles: Array<OutputFile> = [];
 
-  if (analysis.mode === "shared" && analysis.shared !== undefined) {
+  const primaryEnvelope = getPrimaryEnvelopeShape(analysis);
+  if (primaryEnvelope !== undefined) {
     outputFiles.push({
-      content: emitBaseFile(analysis.shared),
+      content: emitBaseFile(primaryEnvelope),
       path: context.baseFile,
     });
 
@@ -222,7 +214,7 @@ export async function generateForSource(
       patchModelsBaseResponse(
         cwd,
         context.apiRoot,
-        buildBaseResponseInterface(analysis.shared)
+        buildBaseResponseInterface(primaryEnvelope)
       );
     }
   }

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
+import { pathToFileURL } from "node:url";
 import { listSourceKeys, loadProjectConfig } from "./config/load";
 import { generateForSource } from "./generate/index";
 import type { GenerateOptions } from "./generate/index";
@@ -7,7 +9,10 @@ import type { InitOptions } from "./init/index";
 
 interface ParsedArgs {
   command?: string;
+  /** Populated by the first --source value; kept for init (single-source) compat. */
   source?: string;
+  /** All --source values collected for multi-source generate. */
+  sources: Array<string>;
   spec?: string;
   client?: "axios" | "fetch" | "custom";
   layout?: "monolith" | "packages";
@@ -16,8 +21,8 @@ interface ParsedArgs {
   all?: boolean;
 }
 
-function parseArgs(argv: Array<string>): ParsedArgs {
-  const parsed: ParsedArgs = {};
+export function parseArgs(argv: Array<string>): ParsedArgs {
+  const parsed: ParsedArgs = { sources: [] };
   const positional: Array<string> = [];
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -39,13 +44,20 @@ function parseArgs(argv: Array<string>): ParsedArgs {
       continue;
     }
     if (arg.startsWith("--source=")) {
-      parsed.source = arg.slice("--source=".length);
+      const value = arg.slice("--source=".length);
+      parsed.sources.push(value);
+      if (parsed.source === undefined) {
+        parsed.source = value;
+      }
       continue;
     }
     if (arg === "--source") {
       const value = argv[index + 1];
       if (value !== undefined) {
-        parsed.source = value;
+        parsed.sources.push(value);
+        if (parsed.source === undefined) {
+          parsed.source = value;
+        }
         index += 1;
       }
       continue;
@@ -109,9 +121,15 @@ function printHelp(): void {
 
 Usage:
   openapi-codegen init --source <key> --client axios|fetch|custom [--layout monolith|packages]
-  openapi-codegen generate --source <key> [--spec <path>] [--check] [--accept-base] [--all]
+  openapi-codegen generate --source <key> [--source <key2> ...] [--spec <path>] [--check] [--accept-base]
+  openapi-codegen generate --all [--check] [--accept-base]
   openapi-codegen check --source <key> [--spec <path>]
   openapi-codegen accept-base --source <key> [--spec <path>]
+
+Multi-source generate:
+  Provide multiple --source flags, or use --all to generate every source under apiRoot.
+  Configure per-source spec paths in each source.ts:
+    export default { spec: "../path/to/swagger.json", ... }
 `);
 }
 
@@ -129,14 +147,16 @@ async function runGenerate(args: ParsedArgs): Promise<number> {
   let sources: Array<string>;
   if (args.all === true) {
     sources = listSourceKeys(cwd, apiRoot);
-  } else if (args.source !== undefined) {
-    sources = [args.source];
+  } else if (args.sources.length > 0) {
+    sources = args.sources;
   } else {
     sources = [];
   }
 
   if (sources.length === 0) {
-    process.stderr.write("openapi-codegen: --source is required\n");
+    process.stderr.write(
+      "openapi-codegen: --source <key> or --all is required\n"
+    );
     return 1;
   }
 
@@ -244,8 +264,25 @@ async function main(): Promise<void> {
   process.exit(1);
 }
 
-main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`${message}\n`);
-  process.exit(1);
-});
+// Only auto-execute when this file is the Node.js entry point.
+// Guarding with import.meta.url allows the module to be safely imported
+// in tests without triggering process.exit.
+const isEntryPoint = ((): boolean => {
+  const entry = process.argv[1];
+  if (entry === undefined) {
+    return false;
+  }
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(entry)).href;
+  } catch {
+    return false;
+  }
+})();
+
+if (isEntryPoint) {
+  main().catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`${message}\n`);
+    process.exit(1);
+  });
+}

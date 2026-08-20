@@ -88,6 +88,10 @@ export function emitRoutesFile(options: RoutesEmitterOptions): string {
   }
 
   lines.push("}", "");
+  if (options.routeEnumName !== "RouteTargets") {
+    lines.push(`export { ${options.routeEnumName} as RouteTargets };`);
+    lines.push("");
+  }
   lines.push(
     `export const Routes = createRouteHandlers<RouteParams>(${options.routeEnumName});`
   );

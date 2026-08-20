@@ -72,18 +72,30 @@ describe("integration: monolith generate", () => {
     expect(existsSync(join(generatedDir, "base.ts"))).toBe(false);
   });
 
-  it("fails generate for mixed envelope specs", async () => {
+  it("generates mixed envelope specs with per-operation wrapping", async () => {
     const root = join(fixtureRoot, "layouts", `mixed-${Date.now()}`);
     tempRoots.push(root);
-    createMonolithProject({
+    const { generatedDir } = createMonolithProject({
       root,
       sourceKey: "atlas",
       specContent: mixedSpec,
     });
 
-    await expect(
-      generateForSource({ cwd: root, sourceKey: "atlas" })
-    ).rejects.toThrow(/mixed|envelope/i);
+    await generateForSource({ cwd: root, sourceKey: "atlas" });
+    expect(existsSync(join(generatedDir, "base.ts"))).toBe(true);
+
+    const wrappedType = readFileSync(
+      join(generatedDir, "types/api/acme/v3/widgets/GET.d.ts"),
+      "utf8"
+    );
+    expect(wrappedType).toContain("BaseResponse<");
+
+    const rawType = readFileSync(
+      join(generatedDir, "types/api/acme/v3/plain/[token]/GET.d.ts"),
+      "utf8"
+    );
+    expect(rawType).not.toContain("BaseResponse<");
+    expect(rawType).toContain("token");
   });
 
   it("fails generate for recursive schemas without known-type override", async () => {

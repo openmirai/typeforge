@@ -121,6 +121,46 @@ describe("config/load edge cases", () => {
     expect(listSourceKeys(cwd, "missing-root")).toEqual([]);
   });
 
+  it("parses spec path from source.ts", () => {
+    const cwd = join(
+      process.cwd(),
+      "test/fixtures/layouts",
+      `source-spec-${Date.now()}`
+    );
+    tempRoots.push(cwd);
+    mkdirSync(join(cwd, "src/api/atlas"), { recursive: true });
+    writeFileSync(
+      join(cwd, "src/api/atlas/source.ts"),
+      `export default {
+  spec: "../mirai-core-api/cmd/admin/docs/swagger.json",
+  pathPrefix: "/api/v2",
+};`,
+      "utf8"
+    );
+
+    const config = loadSourceConfig(cwd, "src/api", "atlas");
+    expect(config.spec).toBe("../mirai-core-api/cmd/admin/docs/swagger.json");
+    expect(config.pathPrefix).toBe("/api/v2");
+  });
+
+  it("spec field is undefined when not set in source.ts", () => {
+    const cwd = join(
+      process.cwd(),
+      "test/fixtures/layouts",
+      `source-no-spec-${Date.now()}`
+    );
+    tempRoots.push(cwd);
+    mkdirSync(join(cwd, "src/api/atlas"), { recursive: true });
+    writeFileSync(
+      join(cwd, "src/api/atlas/source.ts"),
+      `export default { pathPrefix: "/api/v2" };`,
+      "utf8"
+    );
+
+    const config = loadSourceConfig(cwd, "src/api", "atlas");
+    expect(config.spec).toBeUndefined();
+  });
+
   it("returns injected mode when http.ts is missing", () => {
     const cwd = join(
       process.cwd(),

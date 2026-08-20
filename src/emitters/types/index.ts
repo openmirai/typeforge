@@ -148,7 +148,7 @@ function renderParamsInterface(
   }
 
   if (extendsParts.length > 0 && nonCommonParams.length === 0) {
-    return `export type ${typeName}Params = ${extendsParts.join(" & ")};`;
+    return `export type ${typeName}Params = ${extendsParts.join(" & ")} & Record<string, string | number | boolean | null | undefined>;`;
   }
 
   const lines: Array<string> = [];
@@ -212,11 +212,18 @@ function renderBodyInterface(
   return `export type ${typeName}Body = ${bodyType};`;
 }
 
+function resolveSuccessResponseSchema(
+  schema: NonNullable<ReturnType<typeof getSuccessResponseSchema>>,
+  components: IRSource["components"]["schemas"]
+) {
+  return schema.kind === "ref" ? resolveRef(schema, components) : schema;
+}
+
 function renderResponseType(
   typeName: string,
   operation: IROperation,
   options: TypesEmitterOptions,
-  envelopeMode: EnvelopeMode,
+  _envelopeMode: EnvelopeMode,
   knownTypeImports: Map<string, string | null>,
   baseImportPath: string
 ): string {
@@ -225,26 +232,20 @@ function renderResponseType(
     return `export type ${typeName}Response = unknown;`;
   }
 
-  if (envelopeMode === "shared") {
-    const resolved =
-      schema.kind === "ref"
-        ? resolveRef(schema, options.source.components.schemas)
-        : schema;
-    const dataSchema =
-      resolved.kind === "object" && resolved.properties?.data !== undefined
-        ? resolved.properties.data.schema
-        : undefined;
-    if (dataSchema !== undefined) {
-      const dataType = renderSchemaType(
-        dataSchema,
-        createRenderContext(
-          options,
-          `${typeName}Response.data`,
-          knownTypeImports
-        )
-      );
-      return `export type ${typeName}Response = import("${baseImportPath}").BaseResponse<${dataType}>;`;
-    }
+  const resolved = resolveSuccessResponseSchema(
+    schema,
+    options.source.components.schemas
+  );
+  const dataSchema =
+    resolved.kind === "object" && resolved.properties?.data !== undefined
+      ? resolved.properties.data.schema
+      : undefined;
+  if (dataSchema !== undefined) {
+    const dataType = renderSchemaType(
+      dataSchema,
+      createRenderContext(options, `${typeName}Response.data`, knownTypeImports)
+    );
+    return `export type ${typeName}Response = import("${baseImportPath}").BaseResponse<${dataType}>;`;
   }
 
   const responseType = renderSchemaType(

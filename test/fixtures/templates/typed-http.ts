@@ -1,77 +1,48 @@
+export type QueryParamValue = string | number | boolean | null | undefined;
+export type QueryParams = Record<string, QueryParamValue>;
+
+export type ResponseValidator<TResponse> = (value: unknown) => TResponse;
+
 export interface HTTPFetchConfig<
-  TParams extends Record<
-    string,
-    string | number | boolean | null | undefined
-  > = Record<string, string | number | boolean | null | undefined>,
+  TParams extends QueryParams = QueryParams,
+  TResponse = unknown,
 > {
   signal?: AbortSignal;
   params?: TParams;
   headers?: Record<string, string>;
+  validateResponse?: ResponseValidator<TResponse>;
 }
 
 export interface HTTPFetch {
-  get<
-    TResponse,
-    TParams extends Record<
-      string,
-      string | number | boolean | null | undefined
-    > = Record<string, string | number | boolean | null | undefined>,
-  >(
+  get<TResponse, TParams extends QueryParams = QueryParams>(
     route: string,
-    config?: HTTPFetchConfig<TParams>
+    config?: HTTPFetchConfig<TParams, TResponse>
   ): Promise<{ data: TResponse }>;
-  post<
-    TResponse,
-    TBody = unknown,
-    TParams extends Record<
-      string,
-      string | number | boolean | null | undefined
-    > = Record<string, string | number | boolean | null | undefined>,
-  >(
+  post<TResponse, TBody = unknown, TParams extends QueryParams = QueryParams>(
     route: string,
     body: TBody,
-    config?: HTTPFetchConfig<TParams>
+    config?: HTTPFetchConfig<TParams, TResponse>
   ): Promise<{ data: TResponse }>;
-  put<
-    TResponse,
-    TBody = unknown,
-    TParams extends Record<
-      string,
-      string | number | boolean | null | undefined
-    > = Record<string, string | number | boolean | null | undefined>,
-  >(
+  put<TResponse, TBody = unknown, TParams extends QueryParams = QueryParams>(
     route: string,
     body: TBody,
-    config?: HTTPFetchConfig<TParams>
+    config?: HTTPFetchConfig<TParams, TResponse>
   ): Promise<{ data: TResponse }>;
-  patch<
-    TResponse,
-    TBody = unknown,
-    TParams extends Record<
-      string,
-      string | number | boolean | null | undefined
-    > = Record<string, string | number | boolean | null | undefined>,
-  >(
+  patch<TResponse, TBody = unknown, TParams extends QueryParams = QueryParams>(
     route: string,
     body: TBody,
-    config?: HTTPFetchConfig<TParams>
+    config?: HTTPFetchConfig<TParams, TResponse>
   ): Promise<{ data: TResponse }>;
-  delete<
-    TResponse,
-    TParams extends Record<
-      string,
-      string | number | boolean | null | undefined
-    > = Record<string, string | number | boolean | null | undefined>,
-  >(
+  delete<TResponse, TParams extends QueryParams = QueryParams>(
     route: string,
-    config?: HTTPFetchConfig<TParams>
+    config?: HTTPFetchConfig<TParams, TResponse>
   ): Promise<{ data: TResponse }>;
 }
 
 export const httpFetch: HTTPFetch = {
   delete: async <TResponse>() => ({ data: undefined as TResponse }),
   get: async <TResponse>() => ({ data: undefined as TResponse }),
-  patch: async <TResponse, TBody = unknown>() => ({ data: undefined as TResponse }),
-  post: async <TResponse, TBody = unknown>() => ({ data: undefined as TResponse }),
-  put: async <TResponse, TBody = unknown>() => ({ data: undefined as TResponse }),
+  patch: async <TResponse>() => ({ data: undefined as TResponse }),
+  post: async <TResponse>() => ({ data: undefined as TResponse }),
+  put: async <TResponse>() => ({ data: undefined as TResponse }),
 };

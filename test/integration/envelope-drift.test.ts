@@ -97,7 +97,9 @@ describe("integration: runtime validation", () => {
       ),
       "utf8"
     );
-    expect(fn).toContain("HTTPFetchConfig<GETApiAcmeV3WidgetsParams>");
+    expect(fn).toContain(
+      "HTTPFetchConfig<GETApiAcmeV3WidgetsParams, GETApiAcmeV3WidgetsResponse>"
+    );
     expect(fn).toContain("config?: Omit<HTTPFetchConfig");
   });
 });

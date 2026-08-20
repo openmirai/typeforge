@@ -31,12 +31,10 @@ describe("emitFunctionFiles", () => {
       { pathPrefix: "/api/acme/v3" }
     );
     const [file] = emitFunctionFiles(baseOptions(source.paths));
-    expect(file?.content).toContain(
-      "import { httpFetch, Routes, RouteTargets }"
-    );
+    expect(file?.content).toContain("import { httpFetch, Routes }");
     expect(file?.content).toContain("params?: GETApiAcmeV3WidgetsParams");
     expect(file?.content).toContain(
-      "httpFetch.get<GETApiAcmeV3WidgetsResponse, GETApiAcmeV3WidgetsParams>(Routes.API_ACME_V3_WIDGETS, { ...config, params, signal });"
+      "httpFetch.get<GETApiAcmeV3WidgetsResponse>(Routes.API_ACME_V3_WIDGETS, { ...config, params, signal });"
     );
     expect(file?.content).toContain("return data;");
     expect(file?.content).not.toMatch(/\bas\s+/);
@@ -74,7 +72,7 @@ describe("emitFunctionFiles", () => {
     });
     expect(file?.content).toContain("http: HTTPFetch");
     expect(file?.content).toContain(
-      "props.http.get<GETApiAcmeV3WidgetsResponse, GETApiAcmeV3WidgetsParams>"
+      "props.http.get<GETApiAcmeV3WidgetsResponse>(Routes.API_ACME_V3_WIDGETS"
     );
     expect(file?.content).not.toContain("import { httpFetch }");
   });

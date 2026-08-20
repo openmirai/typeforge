@@ -181,6 +181,35 @@ export function analyzeEnvelope(source: IRSource): EnvelopeAnalysis {
   return { groups, mode: "mixed", operations };
 }
 
+/** Largest envelope group that includes a `data` field; used for mixed-mode base.ts. */
+export function getPrimaryEnvelopeShape(
+  analysis: EnvelopeAnalysis
+): EnvelopeShape | undefined {
+  if (analysis.shared !== undefined) {
+    return analysis.shared;
+  }
+  if (analysis.mode !== "mixed") {
+    return undefined;
+  }
+
+  let best: EnvelopeShape | undefined;
+  let bestCount = 0;
+  for (const items of analysis.groups.values()) {
+    const first = items[0];
+    if (first === undefined || !looksLikeEnvelope(first.shape)) {
+      continue;
+    }
+    if (!first.shape.fields.some((field) => field.name === "data")) {
+      continue;
+    }
+    if (items.length > bestCount) {
+      bestCount = items.length;
+      best = first.shape;
+    }
+  }
+  return best;
+}
+
 export function parseUserBaseResponse(
   content: string
 ): UserBaseResponseShape | undefined {

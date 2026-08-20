@@ -32,7 +32,10 @@ function isEmptySchema(schema: IRSchema): boolean {
   if (schema.kind === "unknown") {
     return true;
   }
-  if (schema.kind === "object" && schema.properties !== undefined) {
+  if (schema.kind === "object") {
+    if (schema.properties === undefined) {
+      return true;
+    }
     return Object.keys(schema.properties).length === 0;
   }
   return false;

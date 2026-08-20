@@ -91,6 +91,10 @@ export const httpFetch: HTTPFetch = {
 `;
 
 const SOURCE_TEMPLATE = `export default {
+  // Path to the OpenAPI spec file, relative to the project root.
+  // Set this so \`openapi-codegen generate --source <key>\` (or --all) works
+  // without a per-invocation --spec flag.
+  // spec: "../path/to/swagger.json",
   pathPrefix: "/api/acme/v3",
   stripApiPrefix: true,
   routeEnumName: "RouteTargets",

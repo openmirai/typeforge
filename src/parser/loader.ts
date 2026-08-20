@@ -41,8 +41,9 @@ export async function loadSpec(source: SpecSource): Promise<JsonValue> {
  * Resolution priority:
  *   1. --spec CLI flag
  *   2. OPENAPI_SPEC_<UPPER_KEY> env var
- *   3. openapi-codegen.local.json (gitignored per-machine override)
- *   4. committed snapshot at snapshotPath
+ *   3. source.ts `spec` property (project-relative path from config)
+ *   4. openapi-codegen.local.json (gitignored per-machine override)
+ *   5. committed snapshot at snapshotPath
  *
  * Throws a human-readable error (no stack trace as first line) when nothing is found.
  */
@@ -50,6 +51,7 @@ export function resolveSpecSource(
   sourceKey: string,
   opts: {
     specFlag?: string;
+    sourceConfigSpec?: string;
     localOverridePath?: string;
     snapshotPath?: string;
   }
@@ -66,7 +68,12 @@ export function resolveSpecSource(
     return { kind: "env", varName: envVarName };
   }
 
-  // 3. Local override file
+  // 3. source.ts spec property
+  if (opts.sourceConfigSpec !== undefined) {
+    return { kind: "file", path: opts.sourceConfigSpec };
+  }
+
+  // 4. Local override file
   const localPath = opts.localOverridePath ?? "./openapi-codegen.local.json";
   if (existsSync(localPath)) {
     try {
@@ -80,7 +87,7 @@ export function resolveSpecSource(
     }
   }
 
-  // 4. Committed snapshot
+  // 5. Committed snapshot
   if (opts.snapshotPath !== undefined && existsSync(opts.snapshotPath)) {
     return { kind: "file", path: opts.snapshotPath };
   }
@@ -104,6 +111,7 @@ function buildNotFoundMessage(
   envVarName: string,
   opts: {
     specFlag?: string;
+    sourceConfigSpec?: string;
     localOverridePath?: string;
     snapshotPath?: string;
   },
@@ -112,6 +120,10 @@ function buildNotFoundMessage(
   const specFlagNote =
       opts.specFlag !== undefined ? opts.specFlag : dim("not provided"),
     envNote = dim("not set"),
+    sourceConfigNote =
+      opts.sourceConfigSpec !== undefined
+        ? opts.sourceConfigSpec
+        : dim("not set in source.ts"),
     localExists = existsSync(localPath),
     localNote = localExists
       ? dim(`found at ${localPath} (no entry for "${sourceKey}")`)
@@ -121,6 +133,7 @@ function buildNotFoundMessage(
     tried = [
       `  --spec flag:                ${specFlagNote}`,
       `  ${envVarName} env:   ${envNote}`,
+      `  source.ts spec:             ${sourceConfigNote}`,
       `  openapi-codegen.local.json: ${localNote}`,
       `  committed snapshot:         ${snapshotNote}`,
     ].join("\n"),

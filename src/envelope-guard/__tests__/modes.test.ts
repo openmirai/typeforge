@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { analyzeEnvelope } from "../index";
+import { analyzeEnvelope, getPrimaryEnvelopeShape } from "../index";
 import { parseSpec } from "../../parser/index";
 
 const fixtureRoot = fileURLToPath(
@@ -30,6 +30,8 @@ describe("envelope-guard classification", () => {
     );
     expect(analyzeEnvelope(source).mode).toBe("mixed");
     expect(analyzeEnvelope(source).groups.size).toBeGreaterThan(1);
+    const primary = getPrimaryEnvelopeShape(analyzeEnvelope(source));
+    expect(primary?.fields.some((field) => field.name === "data")).toBe(true);
   });
 
   it("handles empty specs without operations", () => {

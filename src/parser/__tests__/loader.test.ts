@@ -146,6 +146,37 @@ describe("resolveSpecSource - priority", () => {
     }
   });
 
+  it("sourceConfigSpec takes priority over local override and snapshot", () => {
+    const specPath = writeSpec("source-config-spec.json", {}),
+      localPath = join(testDir, "openapi-codegen.local.json"),
+      snapshotPath = writeSpec("snapshot.json", {});
+    writeFileSync(localPath, JSON.stringify({ "core-v2": snapshotPath }));
+
+    const source = resolveSpecSource("core-v2", {
+      localOverridePath: localPath,
+      snapshotPath,
+      sourceConfigSpec: specPath,
+    });
+    expect(source).toEqual({ kind: "file", path: specPath });
+  });
+
+  it("env var takes priority over sourceConfigSpec", () => {
+    const envPath = writeSpec("env-spec.json", {}),
+      configPath = writeSpec("source-config-spec.json", {});
+    vi.stubEnv("OPENAPI_SPEC_CORE_V2", envPath);
+
+    const source = resolveSpecSource("core-v2", {
+      sourceConfigSpec: configPath,
+    });
+    expect(source.kind).toBe("env");
+  });
+
+  it("sourceConfigSpec is used when env var is absent and no local override", () => {
+    const specPath = writeSpec("source-config-spec.json", {}),
+      source = resolveSpecSource("core-v2", { sourceConfigSpec: specPath });
+    expect(source).toEqual({ kind: "file", path: specPath });
+  });
+
   it("local override file without entry for source key falls through to snapshot", () => {
     const localPath = join(testDir, "openapi-codegen.local.json"),
       snapshotPath = writeSpec("snapshot.json", {});

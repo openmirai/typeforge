@@ -70,9 +70,13 @@ function getTypeImportPath(
     return resolveAliasAwareImport({
       fromAbsolutePath: fromAbs,
       generatedDir,
-      importBase: options.importBase,
       toAbsolutePath: toAbs,
-      tsconfigPaths: options.tsconfigPaths,
+      ...(options.importBase !== undefined
+        ? { importBase: options.importBase }
+        : {}),
+      ...(options.tsconfigPaths !== undefined
+        ? { tsconfigPaths: options.tsconfigPaths }
+        : {}),
     });
   }
 
@@ -98,9 +102,13 @@ function getRuntimeImportPath(
     return resolveAliasAwareImport({
       fromAbsolutePath: fromAbs,
       generatedDir,
-      importBase: options.importBase,
       toAbsolutePath: toAbs,
-      tsconfigPaths: options.tsconfigPaths,
+      ...(options.importBase !== undefined
+        ? { importBase: options.importBase }
+        : {}),
+      ...(options.tsconfigPaths !== undefined
+        ? { tsconfigPaths: options.tsconfigPaths }
+        : {}),
     });
   }
 
