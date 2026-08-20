@@ -243,7 +243,11 @@ function renderResponseType(
       dataSchema,
       createRenderContext(options, `${typeName}Response.data`, knownTypeImports)
     );
-    return `export type ${typeName}Response = import("${baseImportPath}").BaseResponse<${dataType}>;`;
+    const responseType = renderSchemaType(
+      schema,
+      createRenderContext(options, `${typeName}Response`, knownTypeImports)
+    );
+    return `export type ${typeName}Response = import("${baseImportPath}").BaseResponse<${dataType}> & Omit<${responseType}, "data">;`;
   }
 
   const responseType = renderSchemaType(

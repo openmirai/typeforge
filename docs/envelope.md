@@ -10,6 +10,7 @@ Every success response shares the same envelope object (for example `{ success, 
 
 - Writes `generated/base.ts` with `BaseResponse<T>`.
 - Per-operation response types unwrap `data`: `export type GETApiAcmeV3WidgetsResponse = BaseResponse<Widget[]>`.
+- Operation-specific fields beside `data` are intersected back into the response, preserving their exact schemas instead of widening them to the shared base field type.
 - If `apiRoot/models.ts` already exports `BaseResponse<T>` and its fields differ from the spec, generate **fails** until you either update `models.ts` or run `accept-base`.
 
 Synthetic fixture: `test/fixtures/specs/envelope-list.json` (`/api/acme/v3/widgets`).
