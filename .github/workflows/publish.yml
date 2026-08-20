@@ -12,7 +12,7 @@ on:
         default: main
         type: string
       release_version:
-        description: Exact package version to publish, for example 0.1.0
+        description: Exact package version to publish, for example 0.1.1
         required: true
         type: string
 
@@ -22,11 +22,13 @@ concurrency:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
   publish:
-    runs-on: codebuild-fe-mirai-arm-builder-sm-${{ github.run_id }}-${{ github.run_attempt }}
+    # npm Trusted Publishing OIDC only supports GitHub-hosted runners.
+    # Keep CodeBuild for CI; publish must run on ubuntu-latest.
+    runs-on: ubuntu-latest
     env:
       NPM_REGISTRY: https://registry.npmjs.org
       RELEASE_REF: ${{ inputs.release_ref || github.ref }}
@@ -35,7 +37,17 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.release_ref || github.ref }}
-      - uses: ./.github/actions/setup
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
       - name: Verify npm Trusted Publishing runtime
         run: |
           set -euo pipefail
@@ -48,12 +60,10 @@ jobs:
               throw new Error(`npm ${process.argv[1]} is too old for Trusted Publishing; require npm >= 11.5.1`);
             }
           ' "$npm_version"
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24.18.0
-          registry-url: https://registry.npmjs.org
-          package-manager-cache: false
+
+      - run: pnpm install --frozen-lockfile
       - run: pnpm verify
+
       - name: Validate package version matches release tag
         run: |
           set -euo pipefail
@@ -80,8 +90,20 @@ jobs:
             fi
           fi
           echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
+
       - name: Publish to npm with Trusted Publishing
-        run: npm publish --provenance --access public
+        run: npm publish --access public
+
+      - name: Create GitHub Release
         env:
-          NPM_CONFIG_PROVENANCE: "true"
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "v${RELEASE_VERSION}" >/dev/null 2>&1; then
+            echo "GitHub release v${RELEASE_VERSION} already exists"
+            exit 0
+          fi
+          gh release create "v${RELEASE_VERSION}" \
+            --title "v${RELEASE_VERSION}" \
+            --generate-notes \
+            --verify-tag

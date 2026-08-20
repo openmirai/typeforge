@@ -5,6 +5,6 @@
     "requireCleanWorkingDir": true,
     "push": true
   },
-  "npm": { "publish": true },
-  "github": { "release": true }
+  "npm": { "publish": false },
+  "github": { "release": false }
 }
