@@ -17,7 +17,7 @@ For each **source** (a named API, e.g. `atlas`), under `<apiRoot>/<source>/gener
 | `functions/**/*.ts` | Typed callers (`getWidgets`, …) |
 | `routes.ts` | `Routes` string map + `RouteTargets` enum (name configurable) |
 | `runtime.ts` | Re-exports `HTTPFetch`, `httpFetch` (if singleton), routes |
-| `base.ts` | `BaseResponse<T>` when the spec uses a response envelope |
+| `base.ts` | `BaseResponse<T>` when the spec uses a response envelope (or `base.d.ts` for split declaration output) |
 
 Optional:
 
@@ -65,7 +65,7 @@ Prefer the `package.json` script above. To invoke the binary directly:
 | `init` | Scaffold `http.ts`, `source.ts`, `known-types.ts` |
 | `generate` | Write generated files |
 | `check` | Same as `generate --check` — exit 1 if output would change |
-| `accept-base` | Update `generated/base.ts` and patch `models.ts` `BaseResponse` |
+| `accept-base` | Update generated `base.ts` (`base.d.ts` for split declaration output) and patch `models.ts` `BaseResponse` |
 
 `--check` and `--accept-base` cannot be combined. See [docs/cli.md](docs/cli.md) for the full command reference.
 
@@ -138,7 +138,7 @@ Re-exported types from the package root:
 | --- | --- |
 | `spec` | Project-relative spec path (used when no `--spec` / env override) |
 | `functionsDir` | Project-relative function output directory (defaults to the source's `generated/functions`) |
-| `typesDir` | Project-relative type output directory (defaults to the source's `generated/types`; a generated `base.ts` is placed beside this directory when customized) |
+| `typesDir` | Project-relative type output directory (defaults to the source's `generated/types`; a generated `base.d.ts` is placed beside this directory when customized) |
 | `pathPrefix` | Only generate operations under this prefix (e.g. `/api/acme/v3`) |
 | `ignorePaths` | Extra paths to skip |
 | `stripApiPrefix` | Strip a leading `/api` segment from route enum member names |
@@ -178,7 +178,8 @@ Adapters implement `HTTPFetch` from `@openmirai/openapi-codegen/http` (or the ax
 ### 6. Path-alias aware imports
 
 Generated function files import types and `runtime`, and generated response
-types import `base.ts`, using:
+types import the generated base declaration (`base.ts` in monolith output, or
+`base.d.ts` for split declaration output), using:
 
 1. `importBase` in `source.ts`, if set
 2. Else `compilerOptions.paths` from the nearest ancestor `tsconfig.json` with path aliases, starting at the corresponding `functionsDir` or `typesDir`

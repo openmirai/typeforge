@@ -86,7 +86,7 @@ export function buildGenerateContext(
     baseFile:
       sourceConfig.typesDir === undefined
         ? join(generatedDir, "base.ts")
-        : join(dirname(typesDir), "base.ts"),
+        : join(dirname(typesDir), "base.d.ts"),
     cwd,
     functionsDir,
     generatedDir,
