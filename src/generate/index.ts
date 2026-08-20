@@ -30,6 +30,7 @@ import { isJsonObject } from "../json/types";
 import { loadSpec, resolveSpecSource } from "../parser/loader";
 import { parseSpec } from "../parser/index";
 import type { IRSource } from "../parser/types";
+import { loadTsconfigPaths } from "../utils/tsconfig-paths";
 import { writeOutputFiles } from "../utils/output";
 import type { OutputFile } from "../utils/output";
 
@@ -173,11 +174,15 @@ export async function generateForSource(
   const specResolveOptions: {
     snapshotPath: string;
     specFlag?: string;
+    sourceConfigSpec?: string;
   } = {
     snapshotPath: context.snapshotPath,
   };
   if (options.specFlag !== undefined) {
     specResolveOptions.specFlag = options.specFlag;
+  }
+  if (context.sourceConfig.spec !== undefined) {
+    specResolveOptions.sourceConfigSpec = context.sourceConfig.spec;
   }
   const specSource = resolveSpecSource(options.sourceKey, specResolveOptions);
   const rawSpec = await loadSpec(specSource);
@@ -296,14 +301,21 @@ export async function generateForSource(
     path: join(context.generatedDir, "runtime.ts"),
   });
 
-  const functionFiles = emitFunctionFiles({
+  const tsconfigPaths = loadTsconfigPaths(cwd);
+  const functionEmitterOptions: Parameters<typeof emitFunctionFiles>[0] = {
     functionsDir: context.functionsDir,
     hasQueryScope: context.hasQueryScope,
     httpMode: context.httpMode,
     paths: source.paths,
     routeEnumName,
     typesDir: context.typesDir,
-  });
+  };
+  if (context.sourceConfig.importBase !== undefined) {
+    functionEmitterOptions.importBase = context.sourceConfig.importBase;
+  } else if (tsconfigPaths !== undefined) {
+    functionEmitterOptions.tsconfigPaths = tsconfigPaths;
+  }
+  const functionFiles = emitFunctionFiles(functionEmitterOptions);
 
   for (const file of functionFiles) {
     outputFiles.push({

@@ -29,6 +29,21 @@ export interface SourceConfig {
   queryExtends?: QueryExtendsConfig;
   /** When true, emit TanStack Query helpers for GET endpoints (requires query-scope.ts). */
   tanstackQuery?: boolean;
+  /**
+   * Explicit import base for generated function files pointing back to the
+   * `generated/` directory.  When set, overrides both relative paths and
+   * tsconfig alias auto-detection.
+   *
+   * Example: `"@mirai/utils/src/api/v2/generated"` produces imports like
+   * `import ... from "@mirai/utils/src/api/v2/generated/runtime"`.
+   */
+  importBase?: string;
+  /**
+   * Path to the OpenAPI spec file, relative to the project root.
+   * Used as the default spec source when no --spec flag or env var is provided.
+   * Example: "../mirai-core-api/cmd/admin/docs/swagger.json"
+   */
+  spec?: string;
 }
 
 export const DEFAULT_API_ROOT = "src/api";

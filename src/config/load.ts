@@ -102,6 +102,11 @@ function parseSourceConfigContent(content: string): SourceConfig {
     config.tanstackQuery = true;
   }
 
+  const importBase = content.match(/importBase:\s*["'`]([^"'`]+)["'`]/);
+  if (importBase?.[1] !== undefined) {
+    config.importBase = importBase[1];
+  }
+
   const maxRenderDepth = content.match(/maxRenderDepth:\s*(\d+)/)?.[1];
   if (maxRenderDepth !== undefined) {
     config.maxRenderDepth = Number.parseInt(maxRenderDepth, 10);
@@ -110,6 +115,11 @@ function parseSourceConfigContent(content: string): SourceConfig {
   const queryExtends = parseQueryExtends(content);
   if (queryExtends !== undefined) {
     config.queryExtends = queryExtends;
+  }
+
+  const spec = content.match(/spec:\s*["'`]([^"'`]+)["'`]/);
+  if (spec?.[1] !== undefined) {
+    config.spec = spec[1];
   }
 
   return config;

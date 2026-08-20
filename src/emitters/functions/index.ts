@@ -1,10 +1,17 @@
+import { dirname, join } from "node:path";
+
 import type {
   HttpMethod,
   IROperation,
   IRPath,
   IRSchema,
 } from "../../parser/types";
-import { relativeImportFromFunctionFile } from "../../utils/imports";
+import type { TsconfigPathsConfig } from "../../utils/tsconfig-paths";
+import {
+  functionFileAbsPath,
+  relativeImportFromFunctionFile,
+  resolveAliasAwareImport,
+} from "../../utils/imports";
 import { pathToEnumName, pathToFunctionName } from "../../utils/naming";
 import {
   renderPathParamType,
@@ -22,6 +29,13 @@ export interface FunctionsEmitterOptions {
   routeEnumName: string;
   functionsDir: string;
   typesDir: string;
+  /**
+   * Explicit import base for function→generated imports (overrides auto-resolution).
+   * Example: `"@mirai/utils/src/api/v2/generated"`
+   */
+  importBase?: string;
+  /** Loaded tsconfig paths for alias auto-detection. */
+  tsconfigPaths?: TsconfigPathsConfig;
 }
 
 function extractPathParams(routePath: string): Array<string> {
@@ -29,16 +43,68 @@ function extractPathParams(routePath: string): Array<string> {
   return matches.map((match) => match.slice(1, -1));
 }
 
-function getTypeImportPath(cleanPath: string, method: HttpMethod): string {
+function getTypeImportPath(
+  cleanPath: string,
+  method: HttpMethod,
+  options: FunctionsEmitterOptions
+): string {
   const normalizedPath = cleanPath
     .replace(/\{([^}]+)\}/g, "[$1]")
     .split("/")
     .filter(Boolean)
     .join("/");
+
+  if (options.importBase !== undefined || options.tsconfigPaths !== undefined) {
+    const generatedDir = dirname(options.functionsDir);
+    const fromAbs = functionFileAbsPath(
+      options.functionsDir,
+      cleanPath,
+      method.toUpperCase()
+    );
+    const toAbs = join(
+      generatedDir,
+      "types",
+      normalizedPath,
+      method.toUpperCase()
+    );
+    return resolveAliasAwareImport({
+      fromAbsolutePath: fromAbs,
+      generatedDir,
+      importBase: options.importBase,
+      toAbsolutePath: toAbs,
+      tsconfigPaths: options.tsconfigPaths,
+    });
+  }
+
   return relativeImportFromFunctionFile(
     cleanPath,
     `types/${normalizedPath}/${method.toUpperCase()}`
   );
+}
+
+function getRuntimeImportPath(
+  cleanPath: string,
+  options: FunctionsEmitterOptions,
+  method: HttpMethod
+): string {
+  if (options.importBase !== undefined || options.tsconfigPaths !== undefined) {
+    const generatedDir = dirname(options.functionsDir);
+    const fromAbs = functionFileAbsPath(
+      options.functionsDir,
+      cleanPath,
+      method.toUpperCase()
+    );
+    const toAbs = join(generatedDir, "runtime");
+    return resolveAliasAwareImport({
+      fromAbsolutePath: fromAbs,
+      generatedDir,
+      importBase: options.importBase,
+      toAbsolutePath: toAbs,
+      tsconfigPaths: options.tsconfigPaths,
+    });
+  }
+
+  return relativeImportFromFunctionFile(cleanPath, "runtime");
 }
 
 function renderOperationPathParamType(
@@ -91,10 +157,11 @@ function renderFunctionFile(
   const hasRequestBody =
     method !== "get" && hasMeaningfulRequestBody(operation);
   const queryParamsPresent = operation.queryParams.length > 0;
-  const typeImportPath = getTypeImportPath(pathItem.cleanPath, method);
-  const runtimeImportPath = relativeImportFromFunctionFile(
+  const typeImportPath = getTypeImportPath(pathItem.cleanPath, method, options);
+  const runtimeImportPath = getRuntimeImportPath(
     pathItem.cleanPath,
-    "runtime"
+    options,
+    method
   );
 
   const lines: Array<string> = [
@@ -115,17 +182,23 @@ function renderFunctionFile(
   lines.push(`} from "${typeImportPath}";`);
   lines.push("");
 
+  const needsRouteTargets = options.hasQueryScope;
+  const routeTargetsImport = needsRouteTargets ? ", RouteTargets" : "";
+
   if (options.httpMode === "singleton") {
     lines.push(
-      `import { httpFetch, Routes, RouteTargets${options.hasQueryScope ? ", getQueryScopeKey, queryOptions" : ""} } from "${runtimeImportPath}";`
+      `import { httpFetch, Routes${routeTargetsImport}${options.hasQueryScope ? ", getQueryScopeKey, queryOptions" : ""} } from "${runtimeImportPath}";`
     );
   } else {
     lines.push(
-      `import { Routes, RouteTargets${options.hasQueryScope ? ", getQueryScopeKey, queryOptions" : ""} } from "${runtimeImportPath}";`
+      `import { Routes${routeTargetsImport}${options.hasQueryScope ? ", getQueryScopeKey, queryOptions" : ""} } from "${runtimeImportPath}";`
     );
   }
+  const httpFetchTypeImport =
+    options.httpMode === "injected" ? "HTTPFetch, " : "";
+  const queryParamsTypeImport = queryParamsPresent ? "" : ", QueryParams";
   lines.push(
-    `import type { HTTPFetch, HTTPFetchConfig${options.hasQueryScope ? ", QueryScope" : ""} } from "${runtimeImportPath}";`
+    `import type { ${httpFetchTypeImport}HTTPFetchConfig${queryParamsTypeImport}${options.hasQueryScope ? ", QueryScope" : ""} } from "${runtimeImportPath}";`
   );
   lines.push("");
 
@@ -145,8 +218,8 @@ function renderFunctionFile(
     lines.push(`  body: ${typeName}Body;`);
   }
   const configType = queryParamsPresent
-    ? `Omit<HTTPFetchConfig<${typeName}Params>, "params" | "signal">`
-    : 'Omit<HTTPFetchConfig, "params" | "signal">';
+    ? `Omit<HTTPFetchConfig<${typeName}Params, ${typeName}Response>, "params" | "signal">`
+    : `Omit<HTTPFetchConfig<QueryParams, ${typeName}Response>, "params" | "signal">`;
   lines.push(`  config?: ${configType};`);
   lines.push("  signal?: AbortSignal;");
   lines.push("}");
@@ -167,7 +240,7 @@ function renderFunctionFile(
     ...(options.httpMode === "injected" ? ["http"] : []),
     ...pathParams.map((param) => param),
     ...(queryParamsPresent ? ["params"] : []),
-    ...(hasRequestBody ? ["body"] : []),
+    ...(hasRequestBody && method !== "delete" ? ["body"] : []),
     "config",
     "signal",
   ];
@@ -182,16 +255,17 @@ function renderFunctionFile(
 
   let routeCall = `Routes.${enumName}`;
   if (pathParams.length > 0) {
-    routeCall = `Routes.${enumName}({ ${pathParams.map((param) => `${param}: props.${param}`).join(", ")} })`;
+    routeCall = `Routes.${enumName}({ ${pathParams.map((param) => `${param}`).join(", ")} })`;
   }
 
   const fetchConfig = queryParamsPresent
     ? `{ ...config, params, signal }`
     : "{ ...config, signal }";
-  const getGeneric = queryParamsPresent
-    ? `<${typeName}Response, ${typeName}Params>`
-    : `<${typeName}Response>`;
-  const mutationGeneric = `<${typeName}Response, ${typeName}Body>`;
+  const getGeneric = `<${typeName}Response>`;
+  const mutationGeneric = hasRequestBody
+    ? `<${typeName}Response, ${typeName}Body>`
+    : `<${typeName}Response, undefined>`;
+  const mutationBody = hasRequestBody ? "body" : "undefined";
 
   switch (method) {
     case "get":
@@ -201,17 +275,17 @@ function renderFunctionFile(
       break;
     case "post":
       lines.push(
-        `  const { data } = await ${httpClient}.post${mutationGeneric}(${routeCall}, body, { ...config, signal });`
+        `  const { data } = await ${httpClient}.post${mutationGeneric}(${routeCall}, ${mutationBody}, { ...config, signal });`
       );
       break;
     case "put":
       lines.push(
-        `  const { data } = await ${httpClient}.put${mutationGeneric}(${routeCall}, body, { ...config, signal });`
+        `  const { data } = await ${httpClient}.put${mutationGeneric}(${routeCall}, ${mutationBody}, { ...config, signal });`
       );
       break;
     case "patch":
       lines.push(
-        `  const { data } = await ${httpClient}.patch${mutationGeneric}(${routeCall}, body, { ...config, signal });`
+        `  const { data } = await ${httpClient}.patch${mutationGeneric}(${routeCall}, ${mutationBody}, { ...config, signal });`
       );
       break;
     case "delete":
