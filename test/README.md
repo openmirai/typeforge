@@ -1,6 +1,6 @@
 # Test layout
 
-This package follows the plan in `.cursor/plans/headless_openapi_codegen_*.plan.md`.
+Usage and layout for consumers: [README.md](../README.md). Envelope classification: [docs/envelope.md](../docs/envelope.md).
 
 ## Structure
 

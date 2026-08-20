@@ -1,10 +1,15 @@
 {
   "name": "@openmirai/openapi-codegen",
-  "version": "0.1.1",
+  "version": "0.1.2",
+  "description": "Headless OpenAPI to TypeScript codegen CLI and HTTPFetch runtime",
+  "homepage": "https://github.com/openmirai/mirai-openapi-codegen#readme",
+  "bugs": {
+    "url": "https://github.com/openmirai/mirai-openapi-codegen/issues"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/openmirai/mirai-openapi-codegen.git"
+    "url": "git+https://github.com/openmirai/mirai-openapi-codegen.git"
   },
   "bin": {
     "openapi-codegen": "./dist/cli.js"
