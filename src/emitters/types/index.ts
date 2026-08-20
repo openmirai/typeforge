@@ -327,7 +327,9 @@ export function emitTypeFiles(
       const typeFile = `${options.typesDir}/${pathItem.cleanPath}/${operation.method.toUpperCase()}.d.ts`;
       const baseImportPath = resolveAliasAwareImport({
         fromAbsolutePath: typeFile,
-        toAbsolutePath: options.baseFile.replace(/\.ts$/, ""),
+        toAbsolutePath: options.baseFile
+          .replace(/\.d\.ts$/, "")
+          .replace(/\.ts$/, ""),
         ...(options.tsconfigPaths === undefined
           ? {}
           : { tsconfigPaths: options.tsconfigPaths }),
