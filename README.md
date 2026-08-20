@@ -2,10 +2,10 @@
 
 Headless **OpenAPI / Swagger → TypeScript** codegen. The CLI is `openapi-codegen`. It reads a spec, writes typed route enums, request types, and HTTP caller functions, and never talks to a network.
 
-- **npm package:** `@openmirai/openapi-codegen`
-- **GitHub:** [openmirai/mirai-openapi-codegen](https://github.com/openmirai/mirai-openapi-codegen) (not `openmirai/openapi-codegen`)
+- **npm:** [`@openmirai/openapi-codegen`](https://www.npmjs.com/package/@openmirai/openapi-codegen)
+- **GitHub:** [openmirai/mirai-openapi-codegen](https://github.com/openmirai/mirai-openapi-codegen)
 
-This is a library plus a CLI. You own `http.ts` (the `HTTPFetch` adapter). Generated files import that adapter — they do not invent axios/fetch calls inline.
+You own `http.ts` (the `HTTPFetch` adapter). Generated files import that adapter — they do not invent axios/fetch calls inline.
 
 ## What it generates
 
@@ -21,30 +21,53 @@ For each **source** (a named API, e.g. `atlas`), under `<apiRoot>/<source>/gener
 
 Optional:
 
-- **TanStack Query** — set `tanstackQuery: true` in `source.ts` **and** add `<apiRoot>/query-scope.ts`. GET callers then emit `queryOptions` helpers.
-- **Zod** — not generated automatically. Wrap a schema with `createZodValidator` from `@openmirai/openapi-codegen/validation/zod` and pass it as `config.validateResponse`.
-
-Generated callers use generics on `HTTPFetch` methods. They do not emit `as` casts.
+- **TanStack Query** — set `tanstackQuery: true` in `source.ts` **and** add `<apiRoot>/query-scope.ts`.
+- **Zod** — wrap a schema with `createZodValidator` from `@openmirai/openapi-codegen/validation/zod` and pass it as `config.validateResponse`.
 
 ## Install
 
-Requires **Node.js 24** (engines: `>=24 <25`) and **pnpm 10+**.
+Requires **Node.js 20.11+** (LTS). Use any package manager.
 
-Published package:
-
-```bash
-pnpm add -D @openmirai/openapi-codegen
-```
-
-OpenMirai frontend monorepo (`fe-mirai-org-turbo`): pin the npm tarball in the workspace **catalog** the same way other `@openmirai/*` packages are pinned, then depend on `catalog:` — do not confuse the **package name** with the **GitHub repo name**.
-
-Local checkout (this repo next to the app):
-
-```bash
-pnpm add -D @openmirai/openapi-codegen@file:../openmirai-openapi-codegen
-```
+| Package manager | Install |
+| --- | --- |
+| npm | `npm install --save-dev @openmirai/openapi-codegen` |
+| pnpm | `pnpm add -D @openmirai/openapi-codegen` |
+| yarn | `yarn add -D @openmirai/openapi-codegen` |
+| bun | `bun add -d @openmirai/openapi-codegen` |
 
 Axios is an **optional peer**. Install `axios` only if you use `--client axios`.
+
+Add a script so every package manager resolves the CLI from `node_modules/.bin`:
+
+```json
+{
+  "scripts": {
+    "generate:types": "openapi-codegen generate --all"
+  }
+}
+```
+
+Then run `npm run generate:types`, `pnpm run generate:types`, `yarn generate:types`, or `bun run generate:types`.
+
+## CLI usage
+
+Prefer the `package.json` script above. To invoke the binary directly:
+
+| Command | npm | pnpm | yarn | bun |
+| --- | --- | --- | --- | --- |
+| Init a source | `npx openapi-codegen init --source atlas --client axios` | `pnpm exec openapi-codegen init --source atlas --client axios` | `yarn openapi-codegen init --source atlas --client axios` | `bunx openapi-codegen init --source atlas --client axios` |
+| Generate one source | `npx openapi-codegen generate --source atlas` | `pnpm exec openapi-codegen generate --source atlas` | `yarn openapi-codegen generate --source atlas` | `bunx openapi-codegen generate --source atlas` |
+| Generate all sources | `npx openapi-codegen generate --all` | `pnpm exec openapi-codegen generate --all` | `yarn openapi-codegen generate --all` | `bunx openapi-codegen generate --all` |
+| Drift check (CI) | `npx openapi-codegen generate --all --check` | `pnpm exec openapi-codegen generate --all --check` | `yarn openapi-codegen generate --all --check` | `bunx openapi-codegen generate --all --check` |
+
+| Subcommand | Purpose |
+| --- | --- |
+| `init` | Scaffold `http.ts`, `source.ts`, `known-types.ts` |
+| `generate` | Write generated files |
+| `check` | Same as `generate --check` — exit 1 if output would change |
+| `accept-base` | Update `generated/base.ts` and patch `models.ts` `BaseResponse` |
+
+`--check` and `--accept-base` cannot be combined. See [docs/cli.md](docs/cli.md) for the full command reference.
 
 ## How the flow works
 
@@ -66,23 +89,25 @@ Init creates (if missing):
 - `openapi-codegen.json` with `apiRoot`
 - `<apiRoot>/http.ts` — your `HTTPFetch` implementation
 - `<apiRoot>/known-types.ts` — optional schema → local type mapping
-- `<apiRoot>/<source>/source.ts` — per-API config
+- `<apiRoot>/<source>/source.ts` — per-API config (type-safe template)
 - `<apiRoot>/<source>/generated/` directory
 
 Existing files are skipped.
 
 ### 2. Configure `source.ts`
 
-Init writes a template. Synthetic defaults used in this repo’s tests:
+Use `defineSourceConfig` for autocomplete and compile-time checks:
 
 ```ts
-export default {
+import { defineSourceConfig } from "@openmirai/openapi-codegen";
+
+export default defineSourceConfig({
   spec: "./specs/acme.json",
   pathPrefix: "/api/acme/v3",
   stripApiPrefix: true,
   routeEnumName: "RouteTargets",
-  generationMode: "authoritative" as const,
-  naming: "path" as const,
+  generationMode: "authoritative",
+  naming: "path",
   ignorePaths: [],
   maxRenderDepth: 50,
   resolveMapKeyRefs: true,
@@ -97,8 +122,15 @@ export default {
     sortTypeName: "SortParams",
     sortImportPath: "./pagination",
   },
-};
+});
 ```
+
+Plain `export default { ... }` still works; the CLI reads config fields from the file at generate time.
+
+Re-exported types from the package root:
+
+- `SourceConfig`, `QueryExtendsConfig`, `GenerationMode`, `NamingStrategy`
+- `defineSourceConfig(config)` — identity helper for typed `source.ts`
 
 | Field | Meaning |
 | --- | --- |
@@ -117,54 +149,29 @@ export default {
 ### 3. Spec resolution (first match wins)
 
 1. `--spec <path>`
-2. Env `OPENAPI_SPEC_<KEY>` — source key uppercased, hyphens → underscores (`atlas` → `OPENAPI_SPEC_ATLAS`, `core-v2` → `OPENAPI_SPEC_CORE_V2`)
+2. Env `OPENAPI_SPEC_<KEY>` — source key uppercased, hyphens → underscores
 3. `spec` in that source’s `source.ts`
 4. `openapi-codegen.local.json` (gitignored) map of `{ "<source>": "<path>" }`
 5. Committed snapshot `<apiRoot>/<source>/spec.json`
 
-### 4. Generate
-
-```bash
-openapi-codegen generate --source atlas
-openapi-codegen generate --source atlas --source orbit
-openapi-codegen generate --all
-```
-
-`--all` walks every directory under `apiRoot` that contains `source.ts`.
-
-### 5. Envelope modes
+### 4. Envelope modes
 
 Inferred from success response schemas. Details: [docs/envelope.md](docs/envelope.md).
 
 | Mode | When | Types |
 | --- | --- | --- |
-| **shared** | One envelope shape (fields like `data` / `success` / `message`) | `BaseResponse<Unwrapped>` |
+| **shared** | One envelope shape (`data` / `success` / `message`) | `BaseResponse<Unwrapped>` |
 | **raw** | No shared envelope | Spec schema as-is |
 | **mixed** | Some ops have `data`, others do not | Unwrap **per operation** when `data` exists |
 
-Mixed example (`test/fixtures/specs/mixed-envelope.json`): `GET /api/acme/v3/widgets` unwraps `data`; `GET /api/acme/v3/plain/{token}` stays a plain `{ token, caption }` object.
-
-### 6. HTTPFetch (`http.ts`)
+### 5. HTTPFetch (`http.ts`)
 
 Adapters implement `HTTPFetch` from `@openmirai/openapi-codegen/http` (or the axios/fetch adapter packages). Methods return `Promise<{ data: TResponse }>`.
 
 - If `http.ts` **exports `httpFetch`**, generated functions call that singleton.
 - Otherwise they take `props.http: HTTPFetch` (injected).
 
-Axios template from init:
-
-```ts
-import axiosBase from "axios";
-import { createAxiosAdapter } from "@openmirai/openapi-codegen/adapters/axios";
-
-const axios = axiosBase.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
-});
-
-export const httpFetch = createAxiosAdapter(axios);
-```
-
-### 7. Path-alias aware imports
+### 6. Path-alias aware imports
 
 Function files import types and `runtime` using:
 
@@ -194,25 +201,7 @@ src/api/atlas/spec.json           # optional snapshot
 src/api/atlas/generated/…
 ```
 
-**Packages / OpenMirai** (`--layout packages`): typical placement is `packages/utils/src/api/<source>/` (same layout under that `apiRoot`).
-
-## Commands
-
-```bash
-openapi-codegen init --source <key> --client axios|fetch|custom [--layout monolith|packages]
-openapi-codegen generate --source <key> [--source <key2> …] [--spec <path>] [--check] [--accept-base]
-openapi-codegen generate --all [--check] [--accept-base]
-openapi-codegen check --source <key> [--spec <path>]
-openapi-codegen accept-base --source <key> [--spec <path>]
-```
-
-| Command | Behavior |
-| --- | --- |
-| `generate` | Write generated files |
-| `check` / `generate --check` | Exit 1 if generated files would change (CI drift) |
-| `accept-base` | Update `generated/base.ts` and patch `models.ts` `BaseResponse` to the spec |
-
-`--check` and `--accept-base` cannot be combined.
+**Packages layout** (`--layout packages`): typical placement is `packages/utils/src/api/<source>/`.
 
 ## Zod (optional)
 
@@ -228,22 +217,18 @@ await getWidgets({
 
 ## Releasing
 
-Publishes go through [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) (GitHub Actions OIDC on `ubuntu-latest`). Do not `npm publish` from a laptop.
+Publishes go through [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) (GitHub Actions OIDC). Do not `npm publish` from a laptop.
 
 | | Value |
 | --- | --- |
 | npm package | `@openmirai/openapi-codegen` |
 | GitHub repo | `openmirai/mirai-openapi-codegen` |
 | Workflow | `.github/workflows/publish.yml` |
-| Tag | `v*` (e.g. `v0.1.2`) |
-
-1. Land the version in `package.json` on `main`.
-2. Create the annotated tag with **release-it** (this repo: `pnpm release`, npm publish disabled locally). Use `--no-increment` when the version is already bumped.
-3. Tag push (or `workflow_dispatch` on `publish.yml`) runs verify, `npm publish`, and creates the GitHub Release.
-
-Trusted Publisher on npm must target repo `mirai-openapi-codegen`, workflow file `publish.yml`, permission `publish`.
+| Tag | `v*` (e.g. `v0.1.3`) |
 
 ## Develop this repo
+
+This repository uses **pnpm** for its own CI. Consumers are not required to use pnpm.
 
 ```bash
 pnpm install

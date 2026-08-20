@@ -90,16 +90,18 @@ export const httpFetch: HTTPFetch = {
 };
 `;
 
-const SOURCE_TEMPLATE = `export default {
+const SOURCE_TEMPLATE = `import { defineSourceConfig } from "@openmirai/openapi-codegen";
+
+export default defineSourceConfig({
   // Path to the OpenAPI spec file, relative to the project root.
   // Set this so \`openapi-codegen generate --source <key>\` (or --all) works
   // without a per-invocation --spec flag.
-  // spec: "../path/to/swagger.json",
+  // spec: "./specs/acme.json",
   pathPrefix: "/api/acme/v3",
   stripApiPrefix: true,
   routeEnumName: "RouteTargets",
-  generationMode: "authoritative" as const,
-  naming: "path" as const,
+  generationMode: "authoritative",
+  naming: "path",
   ignorePaths: [],
   maxRenderDepth: 50,
   resolveMapKeyRefs: true,
@@ -113,7 +115,7 @@ const SOURCE_TEMPLATE = `export default {
     sortTypeName: "SortParams",
     sortImportPath: "./pagination",
   },
-};
+});
 `;
 
 const KNOWN_TYPES_TEMPLATE = `/** Map OpenAPI object shapes to your own TypeScript types by property pattern. */

@@ -52,15 +52,26 @@ function readPackageConfig(path: string): OpenApiCodegenConfig {
   }
 }
 
+function unwrapDefineSourceConfig(content: string): string {
+  const match = content.match(
+    /defineSourceConfig\s*(?:<[^>]*>)?\s*\(\s*\{([\s\S]*)\}\s*\)/
+  );
+  if (match?.[1] !== undefined) {
+    return `{${match[1]}}`;
+  }
+  return content;
+}
+
 function parseSourceConfigContent(content: string): SourceConfig {
+  const normalized = unwrapDefineSourceConfig(content);
   const config: SourceConfig = {};
 
-  const pathPrefix = content.match(/pathPrefix:\s*["'`]([^"'`]+)["'`]/);
+  const pathPrefix = normalized.match(/pathPrefix:\s*["'`]([^"'`]+)["'`]/);
   if (pathPrefix?.[1] !== undefined) {
     config.pathPrefix = pathPrefix[1];
   }
 
-  const ignoreMatch = content.match(/ignorePaths:\s*\[([\s\S]*?)\]/);
+  const ignoreMatch = normalized.match(/ignorePaths:\s*\[([\s\S]*?)\]/);
   if (ignoreMatch?.[1] !== undefined) {
     const paths = [...ignoreMatch[1].matchAll(/["'`]([^"'`]+)["'`]/g)]
       .map((match) => match[1])
@@ -70,16 +81,18 @@ function parseSourceConfigContent(content: string): SourceConfig {
     }
   }
 
-  if (/stripApiPrefix:\s*true/.test(content)) {
+  if (/stripApiPrefix:\s*true/.test(normalized)) {
     config.stripApiPrefix = true;
   }
 
-  const routeEnumName = content.match(/routeEnumName:\s*["'`]([^"'`]+)["'`]/);
+  const routeEnumName = normalized.match(
+    /routeEnumName:\s*["'`]([^"'`]+)["'`]/
+  );
   if (routeEnumName?.[1] !== undefined) {
     config.routeEnumName = routeEnumName[1];
   }
 
-  const generationMode = content.match(
+  const generationMode = normalized.match(
     /generationMode:\s*["'`](authoritative|merge)["'`]/
   );
   if (
@@ -89,35 +102,35 @@ function parseSourceConfigContent(content: string): SourceConfig {
     config.generationMode = generationMode[1];
   }
 
-  const naming = content.match(/naming:\s*["'`](path|operationId)["'`]/);
+  const naming = normalized.match(/naming:\s*["'`](path|operationId)["'`]/);
   if (naming?.[1] === "path" || naming?.[1] === "operationId") {
     config.naming = naming[1];
   }
 
-  if (/resolveMapKeyRefs:\s*false/.test(content)) {
+  if (/resolveMapKeyRefs:\s*false/.test(normalized)) {
     config.resolveMapKeyRefs = false;
   }
 
-  if (/tanstackQuery:\s*true/.test(content)) {
+  if (/tanstackQuery:\s*true/.test(normalized)) {
     config.tanstackQuery = true;
   }
 
-  const importBase = content.match(/importBase:\s*["'`]([^"'`]+)["'`]/);
+  const importBase = normalized.match(/importBase:\s*["'`]([^"'`]+)["'`]/);
   if (importBase?.[1] !== undefined) {
     config.importBase = importBase[1];
   }
 
-  const maxRenderDepth = content.match(/maxRenderDepth:\s*(\d+)/)?.[1];
+  const maxRenderDepth = normalized.match(/maxRenderDepth:\s*(\d+)/)?.[1];
   if (maxRenderDepth !== undefined) {
     config.maxRenderDepth = Number.parseInt(maxRenderDepth, 10);
   }
 
-  const queryExtends = parseQueryExtends(content);
+  const queryExtends = parseQueryExtends(normalized);
   if (queryExtends !== undefined) {
     config.queryExtends = queryExtends;
   }
 
-  const spec = content.match(/spec:\s*["'`]([^"'`]+)["'`]/);
+  const spec = normalized.match(/spec:\s*["'`]([^"'`]+)["'`]/);
   if (spec?.[1] !== undefined) {
     config.spec = spec[1];
   }

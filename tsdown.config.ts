@@ -11,7 +11,7 @@ const shared = {
   format: "esm",
   outDir: "dist",
   sourcemap: true,
-  target: "es2024",
+  target: "es2022",
   treeshake: true,
   tsconfig: "tsconfig.json",
 } as const;

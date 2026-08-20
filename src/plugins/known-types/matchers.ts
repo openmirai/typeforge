@@ -11,6 +11,10 @@ function resolveObjectSchema(
   return resolved.kind === "object" ? resolved : undefined;
 }
 
+function sortedStrings(values: Array<string>): Array<string> {
+  return values.slice().toSorted((left, right) => left.localeCompare(right));
+}
+
 export function matchesExactProperties(
   schema: IRSchema,
   components: Record<string, IRSchema>,
@@ -20,8 +24,8 @@ export function matchesExactProperties(
   if (objectSchema?.properties === undefined) {
     return false;
   }
-  const keys = Object.keys(objectSchema.properties).toSorted();
-  const expected = [...exactProperties].toSorted();
+  const keys = sortedStrings(Object.keys(objectSchema.properties));
+  const expected = sortedStrings(exactProperties);
   return (
     keys.length === expected.length &&
     keys.every((key, index) => key === expected[index])

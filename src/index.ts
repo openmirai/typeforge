@@ -30,6 +30,15 @@ export type {
 
 export type { HTTPFetch, HTTPFetchConfig } from "./http/types";
 
+export { defineSourceConfig } from "./config/define";
+export type {
+  GenerationMode,
+  NamingStrategy,
+  OpenApiCodegenConfig,
+  QueryExtendsConfig,
+  SourceConfig,
+} from "./config/types";
+
 export { generateForSource, buildGenerateContext } from "./generate/index";
 export type { GenerateOptions, GenerateResult } from "./generate/index";
 

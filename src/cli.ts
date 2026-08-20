@@ -129,7 +129,8 @@ Usage:
 Multi-source generate:
   Provide multiple --source flags, or use --all to generate every source under apiRoot.
   Configure per-source spec paths in each source.ts:
-    export default { spec: "../path/to/swagger.json", ... }
+    import { defineSourceConfig } from "@openmirai/openapi-codegen";
+    export default defineSourceConfig({ spec: "./specs/acme.json", ... });
 `);
 }
 

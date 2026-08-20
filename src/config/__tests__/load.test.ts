@@ -10,6 +10,10 @@ import {
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+function sortedStrings(values: Array<string>): Array<string> {
+  return values.slice().toSorted((left, right) => left.localeCompare(right));
+}
+
 describe("config/load", () => {
   it("loads apiRoot from openapi-codegen.json and package.json", () => {
     const cwd = join(
@@ -88,6 +92,48 @@ describe("config/load", () => {
     expect(detectHttpMode(cwd, "src/api")).toBe("injected");
   });
 
+  it("parses defineSourceConfig-wrapped source.ts", () => {
+    const cwd = join(
+      process.cwd(),
+      "test/fixtures/layouts",
+      `source-define-${Date.now()}`
+    );
+    mkdirSync(join(cwd, "src/api/atlas"), { recursive: true });
+    writeFileSync(
+      join(cwd, "src/api/atlas/source.ts"),
+      `import { defineSourceConfig } from "@openmirai/openapi-codegen";
+
+export default defineSourceConfig({
+  spec: "./specs/acme.json",
+  pathPrefix: "/api/acme/v3",
+  stripApiPrefix: true,
+  generationMode: "merge",
+  naming: "operationId",
+  tanstackQuery: true,
+  importBase: "@acme/api/generated",
+  maxRenderDepth: 42,
+  queryExtends: {
+    page: "page",
+    limit: "limit",
+    paginationTypeName: "OffsetLimitQuery",
+    paginationImportPath: "./pagination",
+  },
+});`,
+      "utf8"
+    );
+
+    const config = loadSourceConfig(cwd, "src/api", "atlas");
+    expect(config.spec).toBe("./specs/acme.json");
+    expect(config.pathPrefix).toBe("/api/acme/v3");
+    expect(config.stripApiPrefix).toBe(true);
+    expect(config.generationMode).toBe("merge");
+    expect(config.naming).toBe("operationId");
+    expect(config.tanstackQuery).toBe(true);
+    expect(config.importBase).toBe("@acme/api/generated");
+    expect(config.maxRenderDepth).toBe(42);
+    expect(config.queryExtends?.paginationTypeName).toBe("OffsetLimitQuery");
+  });
+
   it("lists source keys by source.ts presence", () => {
     const cwd = join(
       process.cwd(),
@@ -107,7 +153,7 @@ describe("config/load", () => {
       "utf8"
     );
 
-    expect(listSourceKeys(cwd, "src/api").toSorted()).toEqual([
+    expect(sortedStrings(listSourceKeys(cwd, "src/api"))).toEqual([
       "alpha",
       "beta",
     ]);

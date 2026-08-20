@@ -1,6 +1,6 @@
 # Test layout
 
-Usage and layout for consumers: [README.md](../README.md). Envelope classification: [docs/envelope.md](../docs/envelope.md).
+Usage and layout for consumers: [README.md](../README.md). CLI tables: [docs/cli.md](../docs/cli.md). Envelope classification: [docs/envelope.md](../docs/envelope.md).
 
 ## Structure
 
