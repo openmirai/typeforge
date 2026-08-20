@@ -14,6 +14,7 @@ function baseOptions(paths: ReturnType<typeof parseSpec>["paths"]) {
   const root = "/project/src/api/atlas/generated";
   return {
     functionsDir: `${root}/functions`,
+    generatedDir: root,
     hasQueryScope: false,
     httpMode: "singleton" as const,
     paths,

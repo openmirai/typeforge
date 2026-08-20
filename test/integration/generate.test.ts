@@ -72,6 +72,55 @@ describe("integration: monolith generate", () => {
     expect(existsSync(join(generatedDir, "base.ts"))).toBe(false);
   });
 
+  it("supports split function and type output directories with tsconfig aliases", async () => {
+    const root = join(fixtureRoot, "layouts", `split-${Date.now()}`);
+    tempRoots.push(root);
+    const functionsDir = join(root, "packages/utils/src/api/routes/core/v2");
+    const typesDir = join(root, "packages/types/src/api/core/v2");
+    createMonolithProject({
+      apiRoot: "packages/utils/src/api",
+      root,
+      sourceConfig: `export default {
+  functionsDir: "packages/utils/src/api/routes/core/v2",
+  typesDir: "packages/types/src/api/core/v2",
+  pathPrefix: "/api/acme/v3",
+  stripApiPrefix: true,
+  generationMode: "authoritative" as const,
+};`,
+      sourceKey: "core",
+      specContent: singleEndpoint,
+    });
+    mkdirSync(join(root, "packages/utils"), { recursive: true });
+    writeFileSync(
+      join(root, "packages/utils/tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: {
+          paths: {
+            "@mirai/utils/src/*": ["./src/*"],
+            "@mirai/*": ["../*"],
+          },
+        },
+      }),
+      "utf8"
+    );
+
+    await generateForSource({ cwd: root, sourceKey: "core" });
+
+    expect(existsSync(join(typesDir, "base.ts"))).toBe(true);
+    expect(existsSync(join(typesDir, "api/acme/v3/widgets/GET.d.ts"))).toBe(
+      true
+    );
+    const fn = readFileSync(
+      join(functionsDir, "api/acme/v3/widgets/GET.ts"),
+      "utf8"
+    );
+    expect(fn).toContain(
+      'from "@mirai/types/src/api/core/v2/api/acme/v3/widgets/GET"'
+    );
+    expect(fn).toContain('from "@mirai/utils/src/api/core/generated/runtime"');
+    expect(fn).not.toContain("../../../../");
+  });
+
   it("generates mixed envelope specs with per-operation wrapping", async () => {
     const root = join(fixtureRoot, "layouts", `mixed-${Date.now()}`);
     tempRoots.push(root);

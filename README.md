@@ -103,6 +103,8 @@ import { defineSourceConfig } from "@openmirai/openapi-codegen";
 
 export default defineSourceConfig({
   spec: "./specs/acme.json",
+  functionsDir: "packages/utils/src/api/routes/atlas",
+  typesDir: "packages/types/src/api/atlas",
   pathPrefix: "/api/acme/v3",
   stripApiPrefix: true,
   routeEnumName: "RouteTargets",
@@ -135,6 +137,8 @@ Re-exported types from the package root:
 | Field | Meaning |
 | --- | --- |
 | `spec` | Project-relative spec path (used when no `--spec` / env override) |
+| `functionsDir` | Project-relative function output directory (defaults to the source's `generated/functions`) |
+| `typesDir` | Project-relative type output directory (defaults to the source's `generated/types`; a generated `base.ts` is colocated here when customized) |
 | `pathPrefix` | Only generate operations under this prefix (e.g. `/api/acme/v3`) |
 | `ignorePaths` | Extra paths to skip |
 | `stripApiPrefix` | Strip a leading `/api` segment from route enum member names |
@@ -176,7 +180,7 @@ Adapters implement `HTTPFetch` from `@openmirai/openapi-codegen/http` (or the ax
 Function files import types and `runtime` using:
 
 1. `importBase` in `source.ts`, if set
-2. Else `compilerOptions.paths` from the nearest `tsconfig.json`
+2. Else `compilerOptions.paths` from the nearest ancestor `tsconfig.json` with path aliases, starting at `functionsDir`
 3. Else relative paths (`../../runtime`)
 
 ## Where files go
@@ -202,6 +206,11 @@ src/api/atlas/generated/…
 ```
 
 **Packages layout** (`--layout packages`): typical placement is `packages/utils/src/api/<source>/`.
+
+Set `functionsDir` and `typesDir` when callers and declarations belong in
+different packages. Relative imports continue to work without aliases; when a
+nearby `tsconfig.json` maps both output roots, deep generated imports use those
+aliases automatically.
 
 ## Zod (optional)
 

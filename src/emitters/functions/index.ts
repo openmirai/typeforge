@@ -1,4 +1,4 @@
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 
 import type {
   HttpMethod,
@@ -9,7 +9,6 @@ import type {
 import type { TsconfigPathsConfig } from "../../utils/tsconfig-paths";
 import {
   functionFileAbsPath,
-  relativeImportFromFunctionFile,
   resolveAliasAwareImport,
 } from "../../utils/imports";
 import { pathToEnumName, pathToFunctionName } from "../../utils/naming";
@@ -28,6 +27,7 @@ export interface FunctionsEmitterOptions {
   hasQueryScope: boolean;
   routeEnumName: string;
   functionsDir: string;
+  generatedDir: string;
   typesDir: string;
   /**
    * Explicit import base for function→generated imports (overrides auto-resolution).
@@ -54,36 +54,23 @@ function getTypeImportPath(
     .filter(Boolean)
     .join("/");
 
-  if (options.importBase !== undefined || options.tsconfigPaths !== undefined) {
-    const generatedDir = dirname(options.functionsDir);
-    const fromAbs = functionFileAbsPath(
-      options.functionsDir,
-      cleanPath,
-      method.toUpperCase()
-    );
-    const toAbs = join(
-      generatedDir,
-      "types",
-      normalizedPath,
-      method.toUpperCase()
-    );
-    return resolveAliasAwareImport({
-      fromAbsolutePath: fromAbs,
-      generatedDir,
-      toAbsolutePath: toAbs,
-      ...(options.importBase !== undefined
-        ? { importBase: options.importBase }
-        : {}),
-      ...(options.tsconfigPaths !== undefined
-        ? { tsconfigPaths: options.tsconfigPaths }
-        : {}),
-    });
-  }
-
-  return relativeImportFromFunctionFile(
+  const fromAbs = functionFileAbsPath(
+    options.functionsDir,
     cleanPath,
-    `types/${normalizedPath}/${method.toUpperCase()}`
+    method.toUpperCase()
   );
+  const toAbs = join(options.typesDir, normalizedPath, method.toUpperCase());
+  return resolveAliasAwareImport({
+    fromAbsolutePath: fromAbs,
+    generatedDir: options.generatedDir,
+    toAbsolutePath: toAbs,
+    ...(options.importBase !== undefined
+      ? { importBase: options.importBase }
+      : {}),
+    ...(options.tsconfigPaths !== undefined
+      ? { tsconfigPaths: options.tsconfigPaths }
+      : {}),
+  });
 }
 
 function getRuntimeImportPath(
@@ -91,28 +78,23 @@ function getRuntimeImportPath(
   options: FunctionsEmitterOptions,
   method: HttpMethod
 ): string {
-  if (options.importBase !== undefined || options.tsconfigPaths !== undefined) {
-    const generatedDir = dirname(options.functionsDir);
-    const fromAbs = functionFileAbsPath(
-      options.functionsDir,
-      cleanPath,
-      method.toUpperCase()
-    );
-    const toAbs = join(generatedDir, "runtime");
-    return resolveAliasAwareImport({
-      fromAbsolutePath: fromAbs,
-      generatedDir,
-      toAbsolutePath: toAbs,
-      ...(options.importBase !== undefined
-        ? { importBase: options.importBase }
-        : {}),
-      ...(options.tsconfigPaths !== undefined
-        ? { tsconfigPaths: options.tsconfigPaths }
-        : {}),
-    });
-  }
-
-  return relativeImportFromFunctionFile(cleanPath, "runtime");
+  const fromAbs = functionFileAbsPath(
+    options.functionsDir,
+    cleanPath,
+    method.toUpperCase()
+  );
+  const toAbs = join(options.generatedDir, "runtime");
+  return resolveAliasAwareImport({
+    fromAbsolutePath: fromAbs,
+    generatedDir: options.generatedDir,
+    toAbsolutePath: toAbs,
+    ...(options.importBase !== undefined
+      ? { importBase: options.importBase }
+      : {}),
+    ...(options.tsconfigPaths !== undefined
+      ? { tsconfigPaths: options.tsconfigPaths }
+      : {}),
+  });
 }
 
 function renderOperationPathParamType(

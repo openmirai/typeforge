@@ -109,6 +109,45 @@ describe("loadTsconfigPaths", () => {
     expect(result?.resolvedBaseUrl).toBe(resolve(tmpDir, "."));
   });
 
+  it("finds the nearest tsconfig from a nested output directory", () => {
+    const packageDir = join(tmpDir, "packages/utils");
+    const outputDir = join(packageDir, "src/api/routes/core/v2");
+    mkdirSync(outputDir, { recursive: true });
+    writeFileSync(
+      join(packageDir, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: { paths: { "@mirai/utils/*": ["src/*"] } },
+      }),
+      "utf8"
+    );
+
+    const result = loadTsconfigPaths(outputDir);
+    expect(result?.baseDir).toBe(packageDir);
+    expect(result?.resolvedBaseUrl).toBe(packageDir);
+  });
+
+  it("continues upward when a nearer tsconfig has no path aliases", () => {
+    const packageDir = join(tmpDir, "packages/utils");
+    const outputDir = join(packageDir, "src/api/routes");
+    mkdirSync(outputDir, { recursive: true });
+    writeFileSync(
+      join(tmpDir, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: { paths: { "@workspace/*": ["packages/*"] } },
+      }),
+      "utf8"
+    );
+    writeFileSync(
+      join(packageDir, "tsconfig.json"),
+      JSON.stringify({ compilerOptions: { strict: true } }),
+      "utf8"
+    );
+
+    const result = loadTsconfigPaths(outputDir);
+    expect(result?.baseDir).toBe(tmpDir);
+    expect(result?.paths).toEqual({ "@workspace/*": ["packages/*"] });
+  });
+
   it("returns undefined for malformed JSON", () => {
     writeFileSync(join(tmpDir, "tsconfig.json"), "{ not valid json }", "utf8");
     expect(loadTsconfigPaths(tmpDir)).toBeUndefined();

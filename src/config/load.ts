@@ -71,6 +71,16 @@ function parseSourceConfigContent(content: string): SourceConfig {
     config.pathPrefix = pathPrefix[1];
   }
 
+  const functionsDir = normalized.match(/functionsDir:\s*["'`]([^"'`]+)["'`]/);
+  if (functionsDir?.[1] !== undefined) {
+    config.functionsDir = functionsDir[1];
+  }
+
+  const typesDir = normalized.match(/typesDir:\s*["'`]([^"'`]+)["'`]/);
+  if (typesDir?.[1] !== undefined) {
+    config.typesDir = typesDir[1];
+  }
+
   const ignoreMatch = normalized.match(/ignorePaths:\s*\[([\s\S]*?)\]/);
   if (ignoreMatch?.[1] !== undefined) {
     const paths = [...ignoreMatch[1].matchAll(/["'`]([^"'`]+)["'`]/g)]

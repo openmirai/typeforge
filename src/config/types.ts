@@ -18,6 +18,16 @@ export interface QueryExtendsConfig {
 }
 
 export interface SourceConfig {
+  /**
+   * Project-relative directory for generated API function files.
+   * Defaults to `<apiRoot>/<source>/generated/functions`.
+   */
+  functionsDir?: string;
+  /**
+   * Project-relative directory for generated API type files.
+   * Defaults to `<apiRoot>/<source>/generated/types`.
+   */
+  typesDir?: string;
   pathPrefix?: string;
   ignorePaths?: Array<string>;
   stripApiPrefix?: boolean;
