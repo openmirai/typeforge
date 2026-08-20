@@ -106,7 +106,7 @@ describe("integration: monolith generate", () => {
 
     await generateForSource({ cwd: root, sourceKey: "core" });
 
-    expect(existsSync(join(typesDir, "base.ts"))).toBe(true);
+    expect(existsSync(join(typesDir, "../base.ts"))).toBe(true);
     expect(existsSync(join(typesDir, "api/acme/v3/widgets/GET.d.ts"))).toBe(
       true
     );

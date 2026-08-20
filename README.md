@@ -138,7 +138,7 @@ Re-exported types from the package root:
 | --- | --- |
 | `spec` | Project-relative spec path (used when no `--spec` / env override) |
 | `functionsDir` | Project-relative function output directory (defaults to the source's `generated/functions`) |
-| `typesDir` | Project-relative type output directory (defaults to the source's `generated/types`; a generated `base.ts` is colocated here when customized) |
+| `typesDir` | Project-relative type output directory (defaults to the source's `generated/types`; a generated `base.ts` is placed beside this directory when customized) |
 | `pathPrefix` | Only generate operations under this prefix (e.g. `/api/acme/v3`) |
 | `ignorePaths` | Extra paths to skip |
 | `stripApiPrefix` | Strip a leading `/api` segment from route enum member names |

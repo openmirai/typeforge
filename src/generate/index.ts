@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 import {
   detectHttpMode,
@@ -86,7 +86,7 @@ export function buildGenerateContext(
     baseFile:
       sourceConfig.typesDir === undefined
         ? join(generatedDir, "base.ts")
-        : join(typesDir, "base.ts"),
+        : join(dirname(typesDir), "base.ts"),
     cwd,
     functionsDir,
     generatedDir,
