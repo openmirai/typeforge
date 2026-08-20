@@ -1,4 +1,7 @@
-import { buildBaseResponseInterface } from "../../envelope-guard/index";
+import {
+  buildBaseResponseInterface,
+  matchesEnvelopeShape,
+} from "../../envelope-guard/index";
 import type { EnvelopeMode, EnvelopeShape } from "../../envelope-guard/index";
 import type { QueryExtendsConfig } from "../../config/types";
 import { DEFAULT_MAX_RENDER_DEPTH } from "../../config/types";
@@ -239,6 +242,23 @@ function renderResponseType(
       ? resolved.properties.data.schema
       : undefined;
   if (dataSchema !== undefined) {
+    const usesBaseResponse =
+      _envelopeMode === "shared" ||
+      (_envelopeMode === "mixed" &&
+        options.sharedEnvelope !== undefined &&
+        matchesEnvelopeShape(
+          schema,
+          options.source.components.schemas,
+          options.sharedEnvelope
+        ));
+    if (!usesBaseResponse) {
+      const responseType = renderSchemaType(
+        schema,
+        createRenderContext(options, `${typeName}Response`, knownTypeImports)
+      );
+      return `export type ${typeName}Response = ${responseType};`;
+    }
+
     const dataType = renderSchemaType(
       dataSchema,
       createRenderContext(options, `${typeName}Response.data`, knownTypeImports)

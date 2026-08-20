@@ -145,6 +145,13 @@ describe("integration: monolith generate", () => {
     );
     expect(rawType).not.toContain("BaseResponse<");
     expect(rawType).toContain("token");
+
+    const secondaryEnvelopeType = readFileSync(
+      join(generatedDir, "types/api/acme/v3/secondary/GET.d.ts"),
+      "utf8"
+    );
+    expect(secondaryEnvelopeType).not.toContain("BaseResponse<");
+    expect(secondaryEnvelopeType).toContain("cursor?: string");
   });
 
   it("fails generate for recursive schemas without known-type override", async () => {

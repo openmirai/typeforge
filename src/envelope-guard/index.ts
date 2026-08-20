@@ -89,6 +89,15 @@ function fingerprint(shape: EnvelopeShape): string {
   );
 }
 
+export function matchesEnvelopeShape(
+  schema: IRSchema,
+  components: Record<string, IRSchema>,
+  expected: EnvelopeShape
+): boolean {
+  const actual = extractEnvelopeShape(schema, components);
+  return actual !== undefined && fingerprint(actual) === fingerprint(expected);
+}
+
 function looksLikeEnvelope(shape: EnvelopeShape): boolean {
   const names = new Set(shape.fields.map((field) => field.name));
   return names.has("data") || names.has("success") || names.has("message");

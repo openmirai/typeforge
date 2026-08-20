@@ -242,8 +242,8 @@ export async function generateForSource(
     typeEmitterOptions.resolveMapKeyRefs =
       context.sourceConfig.resolveMapKeyRefs;
   }
-  if (analysis.shared !== undefined) {
-    typeEmitterOptions.sharedEnvelope = analysis.shared;
+  if (primaryEnvelope !== undefined) {
+    typeEmitterOptions.sharedEnvelope = primaryEnvelope;
   }
   if (context.sourceConfig.maxRenderDepth !== undefined) {
     typeEmitterOptions.maxRenderDepth = context.sourceConfig.maxRenderDepth;

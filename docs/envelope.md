@@ -26,8 +26,8 @@ Synthetic fixture: `test/fixtures/specs/raw-cursor-list.json` (`/api/orbit/v1`).
 Some operations return an envelope with `data`; others return a plain object. Mixed mode:
 
 1. Writes `generated/base.ts` from the **largest envelope group that includes `data`**.
-2. Operations whose success schema has a `data` property use `BaseResponse<Unwrapped>`.
-3. Operations without `data` keep the raw schema (no unwrap).
+2. Operations matching that primary envelope use `BaseResponse<Unwrapped>`.
+3. Other operations keep their exact raw schema, including differently shaped objects that also contain `data`.
 
 Example from `test/fixtures/specs/mixed-envelope.json`:
 
