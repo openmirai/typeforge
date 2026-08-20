@@ -105,6 +105,8 @@ describe("config/load", () => {
 
 export default defineSourceConfig({
   spec: "./specs/acme.json",
+  functionsDir: "packages/utils/src/api/routes/atlas",
+  typesDir: "packages/types/src/api/atlas",
   pathPrefix: "/api/acme/v3",
   stripApiPrefix: true,
   generationMode: "merge",
@@ -124,6 +126,8 @@ export default defineSourceConfig({
 
     const config = loadSourceConfig(cwd, "src/api", "atlas");
     expect(config.spec).toBe("./specs/acme.json");
+    expect(config.functionsDir).toBe("packages/utils/src/api/routes/atlas");
+    expect(config.typesDir).toBe("packages/types/src/api/atlas");
     expect(config.pathPrefix).toBe("/api/acme/v3");
     expect(config.stripApiPrefix).toBe(true);
     expect(config.generationMode).toBe("merge");

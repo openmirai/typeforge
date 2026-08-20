@@ -25,6 +25,61 @@ const blobOverrideRule: KnownTypeRule = {
 };
 
 describe("schema-renderer", () => {
+  const baseContext = {
+    components: {},
+    schemaPath: "test",
+    sourceKey: "test",
+  };
+
+  it("parenthesizes union array items", () => {
+    expect(
+      renderSchemaType(
+        {
+          items: {
+            anyOf: [{ kind: "string" }, { kind: "number" }],
+            kind: "anyOf",
+          },
+          kind: "array",
+        },
+        baseContext
+      )
+    ).toBe("(string | number)[]");
+  });
+
+  it("does not wrap known Tiptap documents in another array", () => {
+    expect(
+      renderSchemaType(
+        { items: { kind: "string" }, kind: "array" },
+        {
+          ...baseContext,
+          knownTypes: [
+            {
+              importPath: null,
+              matcher: (schema) => schema.kind === "string",
+              name: "Tiptap",
+              typeName: "TiptapDocument",
+            },
+          ],
+        }
+      )
+    ).toBe("TiptapDocument");
+  });
+
+  it("drops a generic record when anyOf has a specific variant", () => {
+    expect(
+      renderSchemaType(
+        {
+          anyOf: [
+            { additionalProperties: true, kind: "object" },
+            { kind: "string" },
+          ],
+          kind: "anyOf",
+        },
+        baseContext
+      )
+    ).toBe("string");
+  });
+
   it("errors on recursive schema references", () => {
     const raw = JSON.parse(
       readFileSync(join(fixtureRoot, "specs/recursive-node.json"), "utf8")

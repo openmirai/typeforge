@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, parse, resolve } from "node:path";
 
 export interface TsconfigPathsConfig {
   /** Absolute directory containing tsconfig.json. */
@@ -73,12 +73,29 @@ function stripJsonComments(text: string): string {
 
 /**
  * Load `compilerOptions.paths` and `baseUrl` from the nearest `tsconfig.json`
- * found in `cwd`.  Returns `undefined` when no tsconfig exists or has no paths.
+ * found at or above `startDir`. Returns `undefined` when no tsconfig has paths.
  */
 export function loadTsconfigPaths(
-  cwd: string
+  startDir: string
 ): TsconfigPathsConfig | undefined {
-  const tsconfigPath = resolve(cwd, "tsconfig.json");
+  let currentDir = resolve(startDir);
+  const rootDir = parse(currentDir).root;
+
+  while (true) {
+    const config = readTsconfigPaths(currentDir);
+    if (config !== undefined) {
+      return config;
+    }
+
+    if (currentDir === rootDir) {
+      return undefined;
+    }
+    currentDir = dirname(currentDir);
+  }
+}
+
+function readTsconfigPaths(configDir: string): TsconfigPathsConfig | undefined {
+  const tsconfigPath = resolve(configDir, "tsconfig.json");
   if (!existsSync(tsconfigPath)) {
     return undefined;
   }
@@ -125,9 +142,9 @@ export function loadTsconfigPaths(
     }
 
     return {
-      baseDir: resolve(cwd),
+      baseDir: configDir,
       paths: normalizedPaths,
-      resolvedBaseUrl: resolve(cwd, baseUrl),
+      resolvedBaseUrl: resolve(configDir, baseUrl),
     };
   } catch {
     return undefined;

@@ -35,6 +35,59 @@ describe("emitTypeFiles", () => {
       file.relativePath.endsWith("widgets/GET.d.ts")
     );
     expect(listType?.content).toContain("BaseResponse<");
+    expect(listType?.content).toContain("Omit<{");
+    expect(listType?.content).toContain('"data">');
+    expect(listType?.content).toContain("success: boolean");
+    expect(listType?.content).toContain("timestamp: string");
+  });
+
+  it("preserves operation-specific fields beside envelope data", () => {
+    const source = parseSpec(
+      {
+        openapi: "3.0.0",
+        info: { title: "t", version: "1" },
+        paths: {
+          "/api/acme/v3/widgets": {
+            post: {
+              responses: {
+                "200": {
+                  content: {
+                    "application/json": {
+                      schema: {
+                        type: "object",
+                        properties: {
+                          data: { type: "string" },
+                          warnings: {
+                            type: "object",
+                            properties: {
+                              message: { type: "string" },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      { pathPrefix: "/api/acme/v3" }
+    );
+    const analysis = analyzeEnvelope(source);
+    const files = emitTypeFiles({
+      baseFile: `${generatedRoot}/base.ts`,
+      envelopeMode: analysis.mode,
+      ...(analysis.shared === undefined
+        ? {}
+        : { sharedEnvelope: analysis.shared }),
+      source,
+      typesDir: `${generatedRoot}/types`,
+    });
+
+    expect(files[0]?.content).toContain("warnings?: {");
+    expect(files[0]?.content).toContain("message?: string");
   });
 
   it("emits raw response types without BaseResponse wrapper", () => {
@@ -102,6 +155,7 @@ describe("emitTypeFiles", () => {
       file.relativePath.endsWith("widgets/GET.d.ts")
     );
     expect(listType?.content).toContain('SortParams<"name" | "createdAt">');
+    expect(listType?.content).not.toContain("Record<string");
   });
 
   it("emits alias body types and unknown responses", () => {

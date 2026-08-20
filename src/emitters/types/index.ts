@@ -1,11 +1,15 @@
-import { buildBaseResponseInterface } from "../../envelope-guard/index";
+import {
+  buildBaseResponseInterface,
+  matchesEnvelopeShape,
+} from "../../envelope-guard/index";
 import type { EnvelopeMode, EnvelopeShape } from "../../envelope-guard/index";
 import type { QueryExtendsConfig } from "../../config/types";
 import { DEFAULT_MAX_RENDER_DEPTH } from "../../config/types";
 import type { JsonObject } from "../../json/types";
 import type { KnownTypeRule } from "../../plugins/known-types/index";
 import type { IROperation, IRQueryParam, IRSource } from "../../parser/types";
-import { relativeImportPath } from "../../utils/imports";
+import type { TsconfigPathsConfig } from "../../utils/tsconfig-paths";
+import { resolveAliasAwareImport } from "../../utils/imports";
 import { renderSchemaType } from "../schema-renderer";
 import type { SchemaRenderContext } from "../schema-renderer";
 import { resolveRef } from "../resolve-schema";
@@ -27,6 +31,7 @@ export interface TypesEmitterOptions {
   resolveMapKeyRefs?: boolean;
   typesDir: string;
   baseFile: string;
+  tsconfigPaths?: TsconfigPathsConfig;
 }
 
 function createRenderContext(
@@ -148,18 +153,16 @@ function renderParamsInterface(
   }
 
   if (extendsParts.length > 0 && nonCommonParams.length === 0) {
-    return `export type ${typeName}Params = ${extendsParts.join(" & ")} & Record<string, string | number | boolean | null | undefined>;`;
+    return `export type ${typeName}Params = ${extendsParts.join(" & ")};`;
   }
 
   const lines: Array<string> = [];
   if (extendsParts.length > 0) {
     lines.push(
-      `export interface ${typeName}Params extends ${extendsParts.join(", ")}, Record<string, string | number | boolean | null | undefined> {`
+      `export interface ${typeName}Params extends ${extendsParts.join(", ")} {`
     );
   } else {
-    lines.push(
-      `export interface ${typeName}Params extends Record<string, string | number | boolean | null | undefined> {`
-    );
+    lines.push(`export interface ${typeName}Params {`);
   }
 
   for (const param of nonCommonParams) {
@@ -241,11 +244,32 @@ function renderResponseType(
       ? resolved.properties.data.schema
       : undefined;
   if (dataSchema !== undefined) {
+    const usesBaseResponse =
+      _envelopeMode === "shared" ||
+      (_envelopeMode === "mixed" &&
+        options.sharedEnvelope !== undefined &&
+        matchesEnvelopeShape(
+          schema,
+          options.source.components.schemas,
+          options.sharedEnvelope
+        ));
+    if (!usesBaseResponse) {
+      const responseType = renderSchemaType(
+        schema,
+        createRenderContext(options, `${typeName}Response`, knownTypeImports)
+      );
+      return `export type ${typeName}Response = ${responseType};`;
+    }
+
     const dataType = renderSchemaType(
       dataSchema,
       createRenderContext(options, `${typeName}Response.data`, knownTypeImports)
     );
-    return `export type ${typeName}Response = import("${baseImportPath}").BaseResponse<${dataType}>;`;
+    const responseType = renderSchemaType(
+      schema,
+      createRenderContext(options, `${typeName}Response`, knownTypeImports)
+    );
+    return `export type ${typeName}Response = import("${baseImportPath}").BaseResponse<${dataType}> & Omit<${responseType}, "data">;`;
   }
 
   const responseType = renderSchemaType(
@@ -301,10 +325,13 @@ export function emitTypeFiles(
       }
 
       const typeFile = `${options.typesDir}/${pathItem.cleanPath}/${operation.method.toUpperCase()}.d.ts`;
-      const baseImportPath = relativeImportPath(
-        typeFile,
-        options.baseFile.replace(/\.ts$/, "")
-      );
+      const baseImportPath = resolveAliasAwareImport({
+        fromAbsolutePath: typeFile,
+        toAbsolutePath: options.baseFile.replace(/\.ts$/, ""),
+        ...(options.tsconfigPaths === undefined
+          ? {}
+          : { tsconfigPaths: options.tsconfigPaths }),
+      });
 
       blocks.push(
         renderResponseType(

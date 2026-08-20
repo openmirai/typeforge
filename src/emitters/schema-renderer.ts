@@ -219,7 +219,13 @@ export function renderSchemaType(
         schema.items === undefined
           ? "unknown"
           : renderSchemaType(schema.items, childContext(nextCtx, "[]"));
-      return withNullable(`${itemType}[]`, schema);
+      if (itemType === "TiptapDocument") {
+        return withNullable("TiptapDocument", schema);
+      }
+      return withNullable(
+        `${itemType.includes(" | ") ? `(${itemType})` : itemType}[]`,
+        schema
+      );
     }
     case "object": {
       if (schema.properties === undefined) {
@@ -263,10 +269,17 @@ export function renderSchemaType(
         return "unknown";
       }
 
+      const renderedVariants = variants.map((variant) =>
+        renderSchemaType(variant, nextCtx)
+      );
+      const specificVariants = renderedVariants.filter(
+        (variant) => variant !== "Record<string, unknown>"
+      );
       return withNullable(
-        variants
-          .map((variant) => renderSchemaType(variant, nextCtx))
-          .join(" | "),
+        (specificVariants.length > 0
+          ? specificVariants
+          : renderedVariants
+        ).join(" | "),
         schema
       );
     }

@@ -1,4 +1,4 @@
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 
 import type {
   HttpMethod,
@@ -9,7 +9,6 @@ import type {
 import type { TsconfigPathsConfig } from "../../utils/tsconfig-paths";
 import {
   functionFileAbsPath,
-  relativeImportFromFunctionFile,
   resolveAliasAwareImport,
 } from "../../utils/imports";
 import { pathToEnumName, pathToFunctionName } from "../../utils/naming";
@@ -28,6 +27,7 @@ export interface FunctionsEmitterOptions {
   hasQueryScope: boolean;
   routeEnumName: string;
   functionsDir: string;
+  generatedDir: string;
   typesDir: string;
   /**
    * Explicit import base for function→generated imports (overrides auto-resolution).
@@ -54,36 +54,23 @@ function getTypeImportPath(
     .filter(Boolean)
     .join("/");
 
-  if (options.importBase !== undefined || options.tsconfigPaths !== undefined) {
-    const generatedDir = dirname(options.functionsDir);
-    const fromAbs = functionFileAbsPath(
-      options.functionsDir,
-      cleanPath,
-      method.toUpperCase()
-    );
-    const toAbs = join(
-      generatedDir,
-      "types",
-      normalizedPath,
-      method.toUpperCase()
-    );
-    return resolveAliasAwareImport({
-      fromAbsolutePath: fromAbs,
-      generatedDir,
-      toAbsolutePath: toAbs,
-      ...(options.importBase !== undefined
-        ? { importBase: options.importBase }
-        : {}),
-      ...(options.tsconfigPaths !== undefined
-        ? { tsconfigPaths: options.tsconfigPaths }
-        : {}),
-    });
-  }
-
-  return relativeImportFromFunctionFile(
+  const fromAbs = functionFileAbsPath(
+    options.functionsDir,
     cleanPath,
-    `types/${normalizedPath}/${method.toUpperCase()}`
+    method.toUpperCase()
   );
+  const toAbs = join(options.typesDir, normalizedPath, method.toUpperCase());
+  return resolveAliasAwareImport({
+    fromAbsolutePath: fromAbs,
+    generatedDir: options.generatedDir,
+    toAbsolutePath: toAbs,
+    ...(options.importBase !== undefined
+      ? { importBase: options.importBase }
+      : {}),
+    ...(options.tsconfigPaths !== undefined
+      ? { tsconfigPaths: options.tsconfigPaths }
+      : {}),
+  });
 }
 
 function getRuntimeImportPath(
@@ -91,28 +78,23 @@ function getRuntimeImportPath(
   options: FunctionsEmitterOptions,
   method: HttpMethod
 ): string {
-  if (options.importBase !== undefined || options.tsconfigPaths !== undefined) {
-    const generatedDir = dirname(options.functionsDir);
-    const fromAbs = functionFileAbsPath(
-      options.functionsDir,
-      cleanPath,
-      method.toUpperCase()
-    );
-    const toAbs = join(generatedDir, "runtime");
-    return resolveAliasAwareImport({
-      fromAbsolutePath: fromAbs,
-      generatedDir,
-      toAbsolutePath: toAbs,
-      ...(options.importBase !== undefined
-        ? { importBase: options.importBase }
-        : {}),
-      ...(options.tsconfigPaths !== undefined
-        ? { tsconfigPaths: options.tsconfigPaths }
-        : {}),
-    });
-  }
-
-  return relativeImportFromFunctionFile(cleanPath, "runtime");
+  const fromAbs = functionFileAbsPath(
+    options.functionsDir,
+    cleanPath,
+    method.toUpperCase()
+  );
+  const toAbs = join(options.generatedDir, "runtime");
+  return resolveAliasAwareImport({
+    fromAbsolutePath: fromAbs,
+    generatedDir: options.generatedDir,
+    toAbsolutePath: toAbs,
+    ...(options.importBase !== undefined
+      ? { importBase: options.importBase }
+      : {}),
+    ...(options.tsconfigPaths !== undefined
+      ? { tsconfigPaths: options.tsconfigPaths }
+      : {}),
+  });
 }
 
 function renderOperationPathParamType(
@@ -220,7 +202,10 @@ function renderFunctionFile(
     );
   }
   if (queryParamsPresent) {
-    lines.push(`  params?: ${typeName}Params;`);
+    const optional = operation.queryParams.some((param) => param.required)
+      ? ""
+      : "?";
+    lines.push(`  params${optional}: ${typeName}Params;`);
   }
   if (hasRequestBody) {
     lines.push(`  body: ${typeName}Body;`);
@@ -248,13 +233,13 @@ function renderFunctionFile(
     ...(options.httpMode === "injected" ? ["http"] : []),
     ...pathParams.map((param) => param),
     ...(queryParamsPresent ? ["params"] : []),
-    ...(hasRequestBody && method !== "delete" ? ["body"] : []),
+    ...(hasRequestBody ? ["body"] : []),
     "config",
     "signal",
   ];
 
   lines.push(
-    `export async function ${functionName}(props: ${propsTypeName}): Promise<${typeName}Response | undefined> {`
+    `export async function ${functionName}(props: ${propsTypeName}): Promise<${typeName}Response> {`
   );
   if (destructuredProps.length > 0) {
     lines.push(`  const { ${destructuredProps.join(", ")} } = props;`);
@@ -269,11 +254,14 @@ function renderFunctionFile(
   const fetchConfig = queryParamsPresent
     ? `{ ...config, params, signal }`
     : "{ ...config, signal }";
-  const getGeneric = `<${typeName}Response>`;
-  const mutationGeneric = hasRequestBody
-    ? `<${typeName}Response, ${typeName}Body>`
-    : `<${typeName}Response, undefined>`;
+  const getGeneric = queryParamsPresent
+    ? `<${typeName}Response, ${typeName}Params>`
+    : `<${typeName}Response>`;
+  const mutationGeneric = `<${typeName}Response, ${hasRequestBody ? `${typeName}Body` : "undefined"}${queryParamsPresent ? `, ${typeName}Params` : ""}>`;
   const mutationBody = hasRequestBody ? "body" : "undefined";
+  const mutationConfig = queryParamsPresent
+    ? "{ ...config, params, signal }"
+    : "{ ...config, signal }";
 
   switch (method) {
     case "get":
@@ -283,24 +271,31 @@ function renderFunctionFile(
       break;
     case "post":
       lines.push(
-        `  const { data } = await ${httpClient}.post${mutationGeneric}(${routeCall}, ${mutationBody}, { ...config, signal });`
+        `  const { data } = await ${httpClient}.post${mutationGeneric}(${routeCall}, ${mutationBody}, ${mutationConfig});`
       );
       break;
     case "put":
       lines.push(
-        `  const { data } = await ${httpClient}.put${mutationGeneric}(${routeCall}, ${mutationBody}, { ...config, signal });`
+        `  const { data } = await ${httpClient}.put${mutationGeneric}(${routeCall}, ${mutationBody}, ${mutationConfig});`
       );
       break;
     case "patch":
       lines.push(
-        `  const { data } = await ${httpClient}.patch${mutationGeneric}(${routeCall}, ${mutationBody}, { ...config, signal });`
+        `  const { data } = await ${httpClient}.patch${mutationGeneric}(${routeCall}, ${mutationBody}, ${mutationConfig});`
       );
       break;
-    case "delete":
+    case "delete": {
+      let deleteConfig = fetchConfig;
+      if (hasRequestBody) {
+        deleteConfig = queryParamsPresent
+          ? "{ ...config, data: body, params, signal }"
+          : "{ ...config, data: body, signal }";
+      }
       lines.push(
-        `  const { data } = await ${httpClient}.delete${getGeneric}(${routeCall}, ${fetchConfig});`
+        `  const { data } = await ${httpClient}.delete${getGeneric}(${routeCall}, ${deleteConfig});`
       );
       break;
+    }
   }
 
   lines.push("  return data;");
@@ -312,10 +307,12 @@ function renderFunctionFile(
     lines.push(
       `export function ${queryOptionsName}(props: ${queryOptionsPropsTypeName}) {`
     );
-    lines.push("  const { params, queryScope } = props;");
+    lines.push(
+      `  const { ${queryParamsPresent ? "params, " : ""}queryScope } = props;`
+    );
     lines.push("  return queryOptions({");
     lines.push(
-      `    queryKey: [RouteTargets.${enumName}, ...getQueryScopeKey(queryScope)${pathParams.length > 0 ? `, ${pathParams.map((param) => `props.${param}`).join(", ")}` : ""}, params],`
+      `    queryKey: [RouteTargets.${enumName}, ...getQueryScopeKey(queryScope)${pathParams.length > 0 ? `, ${pathParams.map((param) => `props.${param}`).join(", ")}` : ""}${queryParamsPresent ? ", params" : ""}],`
     );
     lines.push(
       `    queryFn: ({ signal }) => ${functionName}({ ...props, signal }).then((data) => data),`

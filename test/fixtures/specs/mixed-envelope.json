@@ -53,6 +53,25 @@
           }
         }
       }
+    },
+    "/api/acme/v3/secondary": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "string" },
+                    "cursor": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

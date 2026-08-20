@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 import {
   detectHttpMode,
@@ -72,12 +72,23 @@ export function buildGenerateContext(
   const sourceConfig = loadSourceConfig(cwd, apiRoot, sourceKey);
   const sourceDir = resolve(cwd, apiRoot, sourceKey);
   const generatedDir = join(sourceDir, "generated");
+  const functionsDir =
+    sourceConfig.functionsDir === undefined
+      ? join(generatedDir, "functions")
+      : resolve(cwd, sourceConfig.functionsDir);
+  const typesDir =
+    sourceConfig.typesDir === undefined
+      ? join(generatedDir, "types")
+      : resolve(cwd, sourceConfig.typesDir);
 
   return {
     apiRoot,
-    baseFile: join(generatedDir, "base.ts"),
+    baseFile:
+      sourceConfig.typesDir === undefined
+        ? join(generatedDir, "base.ts")
+        : join(dirname(typesDir), "base.ts"),
     cwd,
-    functionsDir: join(generatedDir, "functions"),
+    functionsDir,
     generatedDir,
     hasQueryScope:
       sourceConfig.tanstackQuery === true && hasQueryScopeFile(cwd, apiRoot),
@@ -87,7 +98,7 @@ export function buildGenerateContext(
     sourceConfig,
     sourceDir,
     sourceKey,
-    typesDir: join(generatedDir, "types"),
+    typesDir,
   };
 }
 
@@ -231,8 +242,12 @@ export async function generateForSource(
     typeEmitterOptions.resolveMapKeyRefs =
       context.sourceConfig.resolveMapKeyRefs;
   }
-  if (analysis.shared !== undefined) {
-    typeEmitterOptions.sharedEnvelope = analysis.shared;
+  if (primaryEnvelope !== undefined) {
+    typeEmitterOptions.sharedEnvelope = primaryEnvelope;
+  }
+  const typesTsconfigPaths = loadTsconfigPaths(context.typesDir);
+  if (typesTsconfigPaths !== undefined) {
+    typeEmitterOptions.tsconfigPaths = typesTsconfigPaths;
   }
   if (context.sourceConfig.maxRenderDepth !== undefined) {
     typeEmitterOptions.maxRenderDepth = context.sourceConfig.maxRenderDepth;
@@ -293,9 +308,10 @@ export async function generateForSource(
     path: join(context.generatedDir, "runtime.ts"),
   });
 
-  const tsconfigPaths = loadTsconfigPaths(cwd);
+  const tsconfigPaths = loadTsconfigPaths(context.functionsDir);
   const functionEmitterOptions: Parameters<typeof emitFunctionFiles>[0] = {
     functionsDir: context.functionsDir,
+    generatedDir: context.generatedDir,
     hasQueryScope: context.hasQueryScope,
     httpMode: context.httpMode,
     paths: source.paths,

@@ -9,7 +9,7 @@ export interface FetchAdapterOptions {
   fetch?: typeof fetch;
 }
 
-function appendQuery(url: string, params?: QueryParams): string {
+function appendQuery(url: string, params?: object): string {
   if (params === undefined || Object.keys(params).length === 0) {
     return url;
   }
@@ -34,12 +34,12 @@ function readResponseBody(text: string): JsonValue | undefined {
   return parseJson(text);
 }
 
-async function request<TResponse>(
+async function request<TResponse, TParams extends object>(
   method: string,
   route: string,
   options: FetchAdapterOptions,
   body?: unknown,
-  config?: HTTPFetchConfig<QueryParams, TResponse>
+  config?: HTTPFetchConfig<TParams, TResponse>
 ): Promise<{ data: TResponse }> {
   const fetchImpl = options.fetch ?? globalThis.fetch;
   const baseURL = options.baseURL ?? "";
@@ -79,41 +79,30 @@ export function createFetchAdapter(
   options: FetchAdapterOptions = {}
 ): HTTPFetch {
   return {
-    delete: <TResponse, TParams extends QueryParams = QueryParams>(
+    delete: <TResponse, TParams extends object = QueryParams>(
       route: string,
       config?: HTTPFetchConfig<TParams, TResponse>
-    ) => request<TResponse>("DELETE", route, options, undefined, config),
-    get: <TResponse, TParams extends QueryParams = QueryParams>(
+    ) =>
+      request<TResponse, TParams>("DELETE", route, options, undefined, config),
+    get: <TResponse, TParams extends object = QueryParams>(
       route: string,
       config?: HTTPFetchConfig<TParams, TResponse>
-    ) => request<TResponse>("GET", route, options, undefined, config),
-    patch: <
-      TResponse,
-      TBody = unknown,
-      TParams extends QueryParams = QueryParams,
-    >(
+    ) => request<TResponse, TParams>("GET", route, options, undefined, config),
+    patch: <TResponse, TBody = unknown, TParams extends object = QueryParams>(
       route: string,
       body: TBody,
       config?: HTTPFetchConfig<TParams, TResponse>
-    ) => request<TResponse>("PATCH", route, options, body, config),
-    post: <
-      TResponse,
-      TBody = unknown,
-      TParams extends QueryParams = QueryParams,
-    >(
+    ) => request<TResponse, TParams>("PATCH", route, options, body, config),
+    post: <TResponse, TBody = unknown, TParams extends object = QueryParams>(
       route: string,
       body: TBody,
       config?: HTTPFetchConfig<TParams, TResponse>
-    ) => request<TResponse>("POST", route, options, body, config),
-    put: <
-      TResponse,
-      TBody = unknown,
-      TParams extends QueryParams = QueryParams,
-    >(
+    ) => request<TResponse, TParams>("POST", route, options, body, config),
+    put: <TResponse, TBody = unknown, TParams extends object = QueryParams>(
       route: string,
       body: TBody,
       config?: HTTPFetchConfig<TParams, TResponse>
-    ) => request<TResponse>("PUT", route, options, body, config),
+    ) => request<TResponse, TParams>("PUT", route, options, body, config),
   };
 }
 

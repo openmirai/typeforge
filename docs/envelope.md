@@ -10,6 +10,7 @@ Every success response shares the same envelope object (for example `{ success, 
 
 - Writes `generated/base.ts` with `BaseResponse<T>`.
 - Per-operation response types unwrap `data`: `export type GETApiAcmeV3WidgetsResponse = BaseResponse<Widget[]>`.
+- Operation-specific fields beside `data` are intersected back into the response, preserving their exact schemas instead of widening them to the shared base field type.
 - If `apiRoot/models.ts` already exports `BaseResponse<T>` and its fields differ from the spec, generate **fails** until you either update `models.ts` or run `accept-base`.
 
 Synthetic fixture: `test/fixtures/specs/envelope-list.json` (`/api/acme/v3/widgets`).
@@ -25,8 +26,8 @@ Synthetic fixture: `test/fixtures/specs/raw-cursor-list.json` (`/api/orbit/v1`).
 Some operations return an envelope with `data`; others return a plain object. Mixed mode:
 
 1. Writes `generated/base.ts` from the **largest envelope group that includes `data`**.
-2. Operations whose success schema has a `data` property use `BaseResponse<Unwrapped>`.
-3. Operations without `data` keep the raw schema (no unwrap).
+2. Operations matching that primary envelope use `BaseResponse<Unwrapped>`.
+3. Other operations keep their exact raw schema, including differently shaped objects that also contain `data`.
 
 Example from `test/fixtures/specs/mixed-envelope.json`:
 
