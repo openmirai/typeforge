@@ -24,9 +24,9 @@ importers:
       '@commitlint/types':
         specifier: 21.2.0
         version: 21.2.0
-      '@tsconfig/node24':
-        specifier: 24.0.4
-        version: 24.0.4
+      '@tsconfig/node20':
+        specifier: 20.1.8
+        version: 20.1.8
       '@types/node':
         specifier: 24.13.3
         version: 24.13.3
@@ -867,7 +867,7 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
-  '@tsconfig/node24@24.0.4':
+  '@tsconfig/node20@20.1.8':
     resolution: {integrity: sha512-2A933l5P5oCbv6qSxHs7ckKwobs8BDAe9SJ/Xr2Hy+nDlwmLE1GhFh/g/vXGRZWgxBg9nX/5piDtHR9Dkw/XuA==}
 
   '@types/chai@5.2.3':
@@ -2971,7 +2971,7 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@tsconfig/node24@24.0.4': {}
+  '@tsconfig/node20@20.1.8': {}
 
   '@types/chai@5.2.3':
     dependencies:
