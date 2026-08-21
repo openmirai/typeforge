@@ -112,6 +112,7 @@ export default defineSourceConfig({
   generationMode: "merge",
   naming: "operationId",
   tanstackQuery: true,
+  unwrapResponseData: true,
   importBase: "@acme/api/generated",
   maxRenderDepth: 42,
   queryExtends: {
@@ -133,6 +134,7 @@ export default defineSourceConfig({
     expect(config.generationMode).toBe("merge");
     expect(config.naming).toBe("operationId");
     expect(config.tanstackQuery).toBe(true);
+    expect(config.unwrapResponseData).toBe(true);
     expect(config.importBase).toBe("@acme/api/generated");
     expect(config.maxRenderDepth).toBe(42);
     expect(config.queryExtends?.paginationTypeName).toBe("OffsetLimitQuery");

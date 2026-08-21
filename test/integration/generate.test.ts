@@ -176,6 +176,60 @@ describe("integration: monolith generate", () => {
     expect(secondaryEnvelopeType).toContain("cursor?: string");
   });
 
+  it("emits payload response types for HTTP clients that unwrap envelopes", async () => {
+    const root = join(fixtureRoot, "layouts", `mixed-payload-${Date.now()}`);
+    tempRoots.push(root);
+    const { generatedDir } = createMonolithProject({
+      root,
+      sourceConfig: `export default {
+  pathPrefix: "/api/acme/v3",
+  unwrapResponseData: true,
+};`,
+      sourceKey: "atlas",
+      specContent: mixedSpec,
+    });
+
+    await generateForSource({ cwd: root, sourceKey: "atlas" });
+
+    const primaryEnvelopeType = readFileSync(
+      join(generatedDir, "types/api/acme/v3/widgets/GET.d.ts"),
+      "utf8"
+    );
+    expect(primaryEnvelopeType).toContain(
+      "export type GETApiAcmeV3WidgetsResponse = string[];"
+    );
+    expect(primaryEnvelopeType).not.toContain("BaseResponse<");
+
+    const secondaryEnvelopeType = readFileSync(
+      join(generatedDir, "types/api/acme/v3/secondary/GET.d.ts"),
+      "utf8"
+    );
+    expect(secondaryEnvelopeType).toContain("data?: string");
+    expect(secondaryEnvelopeType).toContain("cursor?: string");
+
+    const emptyEnvelopeType = readFileSync(
+      join(generatedDir, "types/api/acme/v3/empty/POST.d.ts"),
+      "utf8"
+    );
+    expect(emptyEnvelopeType).toContain(
+      "export type POSTApiAcmeV3EmptyResponse = null;"
+    );
+
+    const composedEnvelopeType = readFileSync(
+      join(generatedDir, "types/api/acme/v3/composed/GET.d.ts"),
+      "utf8"
+    );
+    expect(composedEnvelopeType).toContain(
+      "export type GETApiAcmeV3ComposedResponse = number;"
+    );
+
+    const rawType = readFileSync(
+      join(generatedDir, "types/api/acme/v3/plain/[token]/GET.d.ts"),
+      "utf8"
+    );
+    expect(rawType).toContain("token: string");
+  });
+
   it("fails generate for recursive schemas without known-type override", async () => {
     const root = join(fixtureRoot, "layouts", `recursive-${Date.now()}`);
     tempRoots.push(root);

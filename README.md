@@ -149,6 +149,7 @@ Re-exported types from the package root:
 | `tanstackQuery` | Emit Query helpers when `query-scope.ts` exists |
 | `importBase` | Force import prefix for generated function files (overrides tsconfig aliases) |
 | `maxRenderDepth` / `resolveMapKeyRefs` | Schema renderer limits |
+| `unwrapResponseData` | Emit an envelope's `data` schema as the operation response type when the project's `HTTPFetch` already unwraps envelopes |
 
 ### 3. Spec resolution (first match wins)
 
@@ -167,6 +168,15 @@ Inferred from success response schemas. Details: [docs/envelope.md](docs/envelop
 | **shared** | One envelope shape (`data` / `success` / `message`) | `BaseResponse<Unwrapped>` |
 | **raw** | No shared envelope | Spec schema as-is |
 | **mixed** | Some ops have `data`, others do not | Unwrap **per operation** when `data` exists |
+
+Set `unwrapResponseData: true` when the project's injected `HTTPFetch`
+normalizes successful envelope bodies before returning `{ data }`. Every
+operation whose success schema contains a `success` field then receives its
+`data` payload type. Data-only objects in mixed specs remain raw. Success
+envelopes without a `data` field receive the `null` type,
+matching clients that normalize an omitted payload to `null`.
+The default remains envelope-preserving and is compatible with the bundled
+Axios and Fetch adapters.
 
 ### 5. HTTPFetch (`http.ts`)
 

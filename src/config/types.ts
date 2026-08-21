@@ -36,6 +36,12 @@ export interface SourceConfig {
   naming?: NamingStrategy;
   maxRenderDepth?: number;
   resolveMapKeyRefs?: boolean;
+  /**
+   * Emit an envelope's `data` schema as the operation response type.
+   * Enable this only when the project's HTTPFetch implementation already
+   * unwraps response envelopes before returning its `{ data }` value.
+   */
+  unwrapResponseData?: boolean;
   queryExtends?: QueryExtendsConfig;
   /** When true, emit TanStack Query helpers for GET endpoints (requires query-scope.ts). */
   tanstackQuery?: boolean;

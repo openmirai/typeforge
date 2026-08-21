@@ -12,7 +12,7 @@ import type { TsconfigPathsConfig } from "../../utils/tsconfig-paths";
 import { resolveAliasAwareImport } from "../../utils/imports";
 import { renderSchemaType } from "../schema-renderer";
 import type { SchemaRenderContext } from "../schema-renderer";
-import { resolveRef } from "../resolve-schema";
+import { resolveObjectSchema } from "../resolve-schema";
 import {
   getFunctionTypeName,
   getSuccessResponseSchema,
@@ -29,6 +29,7 @@ export interface TypesEmitterOptions {
   queryExtends?: QueryExtendsConfig;
   maxRenderDepth?: number;
   resolveMapKeyRefs?: boolean;
+  unwrapResponseData?: boolean;
   typesDir: string;
   baseFile: string;
   tsconfigPaths?: TsconfigPathsConfig;
@@ -219,7 +220,7 @@ function resolveSuccessResponseSchema(
   schema: NonNullable<ReturnType<typeof getSuccessResponseSchema>>,
   components: IRSource["components"]["schemas"]
 ) {
-  return schema.kind === "ref" ? resolveRef(schema, components) : schema;
+  return resolveObjectSchema(schema, components) ?? schema;
 }
 
 function renderResponseType(
@@ -243,6 +244,21 @@ function renderResponseType(
     resolved.kind === "object" && resolved.properties?.data !== undefined
       ? resolved.properties.data.schema
       : undefined;
+  const isSuccessEnvelope =
+    resolved.kind === "object" &&
+    resolved.properties !== undefined &&
+    resolved.properties.success !== undefined;
+  if (options.unwrapResponseData === true && isSuccessEnvelope) {
+    if (dataSchema === undefined) {
+      return `export type ${typeName}Response = null;`;
+    }
+    const dataType = renderSchemaType(
+      dataSchema,
+      createRenderContext(options, `${typeName}Response.data`, knownTypeImports)
+    );
+    return `export type ${typeName}Response = ${dataType};`;
+  }
+
   if (dataSchema !== undefined) {
     const usesBaseResponse =
       _envelopeMode === "shared" ||

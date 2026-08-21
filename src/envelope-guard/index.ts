@@ -1,5 +1,5 @@
 import type { IRSchema, IRSchemaProperty, IRSource } from "../parser/types";
-import { resolveRef } from "../emitters/resolve-schema";
+import { resolveObjectSchema, resolveRef } from "../emitters/resolve-schema";
 import { isSuccessStatusCode, schemaKindLabel } from "../utils/naming";
 
 export type EnvelopeMode = "shared" | "raw" | "mixed";
@@ -58,8 +58,8 @@ function extractEnvelopeShape(
     return undefined;
   }
 
-  const resolved = resolveSchema(schema, components);
-  if (resolved.kind !== "object" || resolved.properties === undefined) {
+  const resolved = resolveObjectSchema(schema, components);
+  if (resolved?.properties === undefined) {
     return undefined;
   }
 

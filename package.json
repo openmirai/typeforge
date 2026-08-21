@@ -1,6 +1,6 @@
 {
   "name": "@openmirai/openapi-codegen",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Headless OpenAPI to TypeScript codegen CLI and HTTPFetch runtime",
   "homepage": "https://github.com/openmirai/mirai-openapi-codegen#readme",
   "bugs": {
