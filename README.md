@@ -1,11 +1,19 @@
-# @openmirai/openapi-codegen
+<p align="center">
+  <img src="./assets/typeforge-logo.png" alt="Typeforge logo" width="280" />
+</p>
 
-Headless **OpenAPI / Swagger → TypeScript** codegen. The CLI is `openapi-codegen`. It reads a spec, writes typed route enums, request types, and HTTP caller functions, and never talks to a network.
+# @openmirai/typeforge
 
-- **npm:** [`@openmirai/openapi-codegen`](https://www.npmjs.com/package/@openmirai/openapi-codegen)
+Headless **OpenAPI / Swagger → TypeScript** codegen. The CLI is `typeforge`. It reads a spec, writes typed route enums, request types, and HTTP caller functions, and never talks to a network.
+
+- **npm:** [`@openmirai/typeforge`](https://www.npmjs.com/package/@openmirai/typeforge)
 - **GitHub:** [openmirai/mirai-openapi-codegen](https://github.com/openmirai/mirai-openapi-codegen)
 
 You own `http.ts` (the `HTTPFetch` adapter). Generated files import that adapter — they do not invent axios/fetch calls inline.
+
+## Migrating from `@openmirai/openapi-codegen`
+
+Install `@openmirai/typeforge` and update package imports and scripts to use the canonical `typeforge` name. During migration, the package also exposes the legacy `openapi-codegen` binary and reads `openapi-codegen.json`, `openapi-codegen.local.json`, and the `openapiCodegen` package.json key. New projects created by `typeforge init` use the Typeforge names.
 
 ## What it generates
 
@@ -22,7 +30,7 @@ For each **source** (a named API, e.g. `atlas`), under `<apiRoot>/<source>/gener
 Optional:
 
 - **TanStack Query** — set `tanstackQuery: true` in `source.ts` **and** add `<apiRoot>/query-scope.ts`.
-- **Zod** — wrap a schema with `createZodValidator` from `@openmirai/openapi-codegen/validation/zod` and pass it as `config.validateResponse`.
+- **Zod** — wrap a schema with `createZodValidator` from `@openmirai/typeforge/validation/zod` and pass it as `config.validateResponse`.
 
 ## Install
 
@@ -30,10 +38,10 @@ Requires **Node.js 20.11+** (LTS). Use any package manager.
 
 | Package manager | Install |
 | --- | --- |
-| npm | `npm install --save-dev @openmirai/openapi-codegen` |
-| pnpm | `pnpm add -D @openmirai/openapi-codegen` |
-| yarn | `yarn add -D @openmirai/openapi-codegen` |
-| bun | `bun add -d @openmirai/openapi-codegen` |
+| npm | `npm install --save-dev @openmirai/typeforge` |
+| pnpm | `pnpm add -D @openmirai/typeforge` |
+| yarn | `yarn add -D @openmirai/typeforge` |
+| bun | `bun add -d @openmirai/typeforge` |
 
 Axios is an **optional peer**. Install `axios` only if you use `--client axios`.
 
@@ -42,7 +50,7 @@ Add a script so every package manager resolves the CLI from `node_modules/.bin`:
 ```json
 {
   "scripts": {
-    "generate:types": "openapi-codegen generate --all"
+    "generate:types": "typeforge generate --all"
   }
 }
 ```
@@ -55,10 +63,10 @@ Prefer the `package.json` script above. To invoke the binary directly:
 
 | Command | npm | pnpm | yarn | bun |
 | --- | --- | --- | --- | --- |
-| Init a source | `npx openapi-codegen init --source atlas --client axios` | `pnpm exec openapi-codegen init --source atlas --client axios` | `yarn openapi-codegen init --source atlas --client axios` | `bunx openapi-codegen init --source atlas --client axios` |
-| Generate one source | `npx openapi-codegen generate --source atlas` | `pnpm exec openapi-codegen generate --source atlas` | `yarn openapi-codegen generate --source atlas` | `bunx openapi-codegen generate --source atlas` |
-| Generate all sources | `npx openapi-codegen generate --all` | `pnpm exec openapi-codegen generate --all` | `yarn openapi-codegen generate --all` | `bunx openapi-codegen generate --all` |
-| Drift check (CI) | `npx openapi-codegen generate --all --check` | `pnpm exec openapi-codegen generate --all --check` | `yarn openapi-codegen generate --all --check` | `bunx openapi-codegen generate --all --check` |
+| Init a source | `npx typeforge init --source atlas --client axios` | `pnpm exec typeforge init --source atlas --client axios` | `yarn typeforge init --source atlas --client axios` | `bunx typeforge init --source atlas --client axios` |
+| Generate one source | `npx typeforge generate --source atlas` | `pnpm exec typeforge generate --source atlas` | `yarn typeforge generate --source atlas` | `bunx typeforge generate --source atlas` |
+| Generate all sources | `npx typeforge generate --all` | `pnpm exec typeforge generate --all` | `yarn typeforge generate --all` | `bunx typeforge generate --all` |
+| Drift check (CI) | `npx typeforge generate --all --check` | `pnpm exec typeforge generate --all --check` | `yarn typeforge generate --all --check` | `bunx typeforge generate --all --check` |
 
 | Subcommand | Purpose |
 | --- | --- |
@@ -78,15 +86,15 @@ init  →  source.ts + http.ts  →  resolve spec  →  generate  →  typed cal
 ### 1. Init a source
 
 ```bash
-openapi-codegen init --source atlas --client axios
-openapi-codegen init --source orbit --client fetch --layout packages
+typeforge init --source atlas --client axios
+typeforge init --source orbit --client fetch --layout packages
 ```
 
 `--client` is `axios` | `fetch` | `custom`. `--layout` is `monolith` (default, `apiRoot` = `src/api`) or `packages` (`apiRoot` = `packages/utils/src/api`).
 
 Init creates (if missing):
 
-- `openapi-codegen.json` with `apiRoot`
+- `typeforge.json` with `apiRoot`
 - `<apiRoot>/http.ts` — your `HTTPFetch` implementation
 - `<apiRoot>/known-types.ts` — optional schema → local type mapping
 - `<apiRoot>/<source>/source.ts` — per-API config (type-safe template)
@@ -99,7 +107,7 @@ Existing files are skipped.
 Use `defineSourceConfig` for autocomplete and compile-time checks:
 
 ```ts
-import { defineSourceConfig } from "@openmirai/openapi-codegen";
+import { defineSourceConfig } from "@openmirai/typeforge";
 
 export default defineSourceConfig({
   spec: "./specs/acme.json",
@@ -156,7 +164,7 @@ Re-exported types from the package root:
 1. `--spec <path>`
 2. Env `OPENAPI_SPEC_<KEY>` — source key uppercased, hyphens → underscores
 3. `spec` in that source’s `source.ts`
-4. `openapi-codegen.local.json` (gitignored) map of `{ "<source>": "<path>" }`
+4. `typeforge.local.json` (gitignored) map of `{ "<source>": "<path>" }`
 5. Committed snapshot `<apiRoot>/<source>/spec.json`
 
 ### 4. Envelope modes
@@ -181,7 +189,7 @@ Axios and Fetch adapters.
 
 ### 5. HTTPFetch (`http.ts`)
 
-Adapters implement `HTTPFetch` from `@openmirai/openapi-codegen/http` (or the axios/fetch adapter packages). Methods return `Promise<{ data: TResponse }>`.
+Adapters implement `HTTPFetch` from `@openmirai/typeforge/http` (or the axios/fetch adapter packages). Methods return `Promise<{ data: TResponse }>`.
 
 - If `http.ts` **exports `httpFetch`**, generated functions call that singleton.
 - Otherwise they take `props.http: HTTPFetch` (injected).
@@ -198,13 +206,13 @@ types import the generated base declaration (`base.ts` in monolith output, or
 
 ## Where files go
 
-`openapi-codegen.json`:
+`typeforge.json`:
 
 ```json
 { "apiRoot": "packages/utils/src/api" }
 ```
 
-You can also set `"openapiCodegen": { "apiRoot": "..." }` in `package.json`. The JSON file wins.
+You can also set `"typeforge": { "apiRoot": "..." }` in `package.json`. The JSON file wins.
 
 **Monolith** (`--layout monolith`, default):
 
@@ -228,7 +236,7 @@ aliases automatically.
 ## Zod (optional)
 
 ```ts
-import { createZodValidator } from "@openmirai/openapi-codegen/validation/zod";
+import { createZodValidator } from "@openmirai/typeforge/validation/zod";
 import { widgetListSchema } from "./widget-list";
 
 await getWidgets({
@@ -243,7 +251,7 @@ Publishes go through [npm Trusted Publishing](https://docs.npmjs.com/trusted-pub
 
 | | Value |
 | --- | --- |
-| npm package | `@openmirai/openapi-codegen` |
+| npm package | `@openmirai/typeforge` |
 | GitHub repo | `openmirai/mirai-openapi-codegen` |
 | Workflow | `.github/workflows/publish.yml` |
 | Tag | `v*` (e.g. `v0.1.3`) |

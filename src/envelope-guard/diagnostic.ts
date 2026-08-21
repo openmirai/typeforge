@@ -10,7 +10,7 @@ export function formatMixedEnvelopeError(
   groups: Map<string, Array<OperationEnvelope>>
 ): string {
   const header = bold(
-    red(`openapi-codegen: mixed envelope shapes in source "${sourceKey}"`)
+    red(`typeforge: mixed envelope shapes in source "${sourceKey}"`)
   );
   const lines = [header, ""];
 
@@ -39,7 +39,7 @@ export function formatMixedEnvelopeError(
   lines.push(bold("Fix:"));
   lines.push("  • Narrow pathPrefix or add ignorePaths in source.ts");
   lines.push(
-    cyan(`  • openapi-codegen generate --source ${sourceKey} --spec <path>`)
+    cyan(`  • typeforge generate --source ${sourceKey} --spec <path>`)
   );
 
   return lines.join("\n");
@@ -54,7 +54,7 @@ export function formatDriftError(
   outliers: Array<OperationEnvelope> = []
 ): string {
   const header = bold(
-    red(`openapi-codegen: base response mismatch in source "${sourceKey}"`)
+    red(`typeforge: base response mismatch in source "${sourceKey}"`)
   );
   const lines = [header, ""];
 
@@ -100,7 +100,7 @@ export function formatDriftError(
   lines.push("  • Update models.ts to match the spec, or");
   lines.push(
     cyan(
-      `  • openapi-codegen generate --source ${sourceKey} --spec <path> --accept-base`
+      `  • typeforge generate --source ${sourceKey} --spec <path> --accept-base`
     )
   );
 

@@ -35,6 +35,7 @@ export type {
   GenerationMode,
   NamingStrategy,
   OpenApiCodegenConfig,
+  TypeforgeConfig,
   QueryExtendsConfig,
   SourceConfig,
 } from "./config/types";

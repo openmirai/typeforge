@@ -15,7 +15,7 @@ function sortedStrings(values: Array<string>): Array<string> {
 }
 
 describe("config/load", () => {
-  it("loads apiRoot from openapi-codegen.json and package.json", () => {
+  it("prefers typeforge.json over legacy and package config", () => {
     const cwd = join(
       process.cwd(),
       "test/fixtures/layouts",
@@ -23,17 +23,50 @@ describe("config/load", () => {
     );
     mkdirSync(cwd, { recursive: true });
     writeFileSync(
-      join(cwd, "openapi-codegen.json"),
+      join(cwd, "typeforge.json"),
       JSON.stringify({ apiRoot: "packages/utils/src/api" }),
       "utf8"
     );
     writeFileSync(
+      join(cwd, "openapi-codegen.json"),
+      JSON.stringify({ apiRoot: "legacy" }),
+      "utf8"
+    );
+    writeFileSync(
       join(cwd, "package.json"),
-      JSON.stringify({ openapiCodegen: { apiRoot: "ignored" } }),
+      JSON.stringify({ typeforge: { apiRoot: "ignored" } }),
       "utf8"
     );
 
     expect(loadProjectConfig(cwd).apiRoot).toBe("packages/utils/src/api");
+  });
+
+  it("reads legacy project config during migration", () => {
+    const jsonCwd = join(
+      process.cwd(),
+      "test/fixtures/layouts",
+      `config-legacy-json-${Date.now()}`
+    );
+    mkdirSync(jsonCwd, { recursive: true });
+    writeFileSync(
+      join(jsonCwd, "openapi-codegen.json"),
+      JSON.stringify({ apiRoot: "legacy/json" }),
+      "utf8"
+    );
+    expect(loadProjectConfig(jsonCwd).apiRoot).toBe("legacy/json");
+
+    const packageCwd = join(
+      process.cwd(),
+      "test/fixtures/layouts",
+      `config-legacy-package-${Date.now()}`
+    );
+    mkdirSync(packageCwd, { recursive: true });
+    writeFileSync(
+      join(packageCwd, "package.json"),
+      JSON.stringify({ openapiCodegen: { apiRoot: "legacy/package" } }),
+      "utf8"
+    );
+    expect(loadProjectConfig(packageCwd).apiRoot).toBe("legacy/package");
   });
 
   it("parses source.ts config fields", () => {
@@ -101,7 +134,7 @@ describe("config/load", () => {
     mkdirSync(join(cwd, "src/api/atlas"), { recursive: true });
     writeFileSync(
       join(cwd, "src/api/atlas/source.ts"),
-      `import { defineSourceConfig } from "@openmirai/openapi-codegen";
+      `import { defineSourceConfig } from "@openmirai/typeforge";
 
 export default defineSourceConfig({
   spec: "./specs/acme.json",

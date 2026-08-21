@@ -94,8 +94,8 @@ jobs:
       - name: Publish package
         run: |
           set -euo pipefail
-          if npm view "@openmirai/openapi-codegen@${RELEASE_VERSION}" version >/dev/null 2>&1; then
-            echo "@openmirai/openapi-codegen@${RELEASE_VERSION} is already published"
+          if npm view "@openmirai/typeforge@${RELEASE_VERSION}" version >/dev/null 2>&1; then
+            echo "@openmirai/typeforge@${RELEASE_VERSION} is already published"
           else
             npm publish --access public
           fi

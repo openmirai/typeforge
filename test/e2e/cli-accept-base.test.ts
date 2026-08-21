@@ -64,7 +64,7 @@ export type ItemList = BaseResponse<Array<{ id: string }>>;`,
     mkdirSync(join(root, "src/api/alpha"), { recursive: true });
     mkdirSync(join(root, "src/api/beta"), { recursive: true });
     writeFileSync(
-      join(root, "openapi-codegen.json"),
+      join(root, "typeforge.json"),
       JSON.stringify({ apiRoot: "src/api" }),
       "utf8"
     );

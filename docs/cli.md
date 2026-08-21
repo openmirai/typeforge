@@ -1,11 +1,13 @@
 # CLI reference
 
-Install `@openmirai/openapi-codegen` from [npmjs](https://www.npmjs.com/package/@openmirai/openapi-codegen). Add a script so the binary resolves from `node_modules/.bin`:
+Install `@openmirai/typeforge` from [npmjs](https://www.npmjs.com/package/@openmirai/typeforge). Add a script so the binary resolves from `node_modules/.bin`:
+
+The legacy `openapi-codegen` binary and configuration filenames remain readable during migration, but all new usage should use `typeforge`.
 
 ```json
 {
   "scripts": {
-    "generate:types": "openapi-codegen generate --all"
+    "generate:types": "typeforge generate --all"
   }
 }
 ```
@@ -14,10 +16,10 @@ Install `@openmirai/openapi-codegen` from [npmjs](https://www.npmjs.com/package/
 
 | Package manager | Command |
 | --- | --- |
-| npm | `npm install --save-dev @openmirai/openapi-codegen` |
-| pnpm | `pnpm add -D @openmirai/openapi-codegen` |
-| yarn | `yarn add -D @openmirai/openapi-codegen` |
-| bun | `bun add -d @openmirai/openapi-codegen` |
+| npm | `npm install --save-dev @openmirai/typeforge` |
+| pnpm | `pnpm add -D @openmirai/typeforge` |
+| yarn | `yarn add -D @openmirai/typeforge` |
+| bun | `bun add -d @openmirai/typeforge` |
 
 ## Commands × package managers
 
@@ -25,10 +27,10 @@ Replace `<args>` with the flags for that subcommand (see below).
 
 | Subcommand | npm | pnpm | yarn | bun |
 | --- | --- | --- | --- | --- |
-| `init <args>` | `npx openapi-codegen init <args>` | `pnpm exec openapi-codegen init <args>` | `yarn openapi-codegen init <args>` | `bunx openapi-codegen init <args>` |
-| `generate <args>` | `npx openapi-codegen generate <args>` | `pnpm exec openapi-codegen generate <args>` | `yarn openapi-codegen generate <args>` | `bunx openapi-codegen generate <args>` |
-| `check <args>` | `npx openapi-codegen check <args>` | `pnpm exec openapi-codegen check <args>` | `yarn openapi-codegen check <args>` | `bunx openapi-codegen check <args>` |
-| `accept-base <args>` | `npx openapi-codegen accept-base <args>` | `pnpm exec openapi-codegen accept-base <args>` | `yarn openapi-codegen accept-base <args>` | `bunx openapi-codegen accept-base <args>` |
+| `init <args>` | `npx typeforge init <args>` | `pnpm exec typeforge init <args>` | `yarn typeforge init <args>` | `bunx typeforge init <args>` |
+| `generate <args>` | `npx typeforge generate <args>` | `pnpm exec typeforge generate <args>` | `yarn typeforge generate <args>` | `bunx typeforge generate <args>` |
+| `check <args>` | `npx typeforge check <args>` | `pnpm exec typeforge check <args>` | `yarn typeforge check <args>` | `bunx typeforge check <args>` |
+| `accept-base <args>` | `npx typeforge accept-base <args>` | `pnpm exec typeforge accept-base <args>` | `yarn typeforge accept-base <args>` | `bunx typeforge accept-base <args>` |
 
 Recommended day-to-day: `npm run generate:types` (or the equivalent for your package manager).
 
@@ -37,7 +39,7 @@ Recommended day-to-day: `npm run generate:types` (or the equivalent for your pac
 ### `init`
 
 ```bash
-openapi-codegen init --source <key> --client axios|fetch|custom [--layout monolith|packages]
+typeforge init --source <key> --client axios|fetch|custom [--layout monolith|packages]
 ```
 
 Creates `http.ts`, `known-types.ts`, `source.ts`, and `generated/` under `apiRoot`.
@@ -45,8 +47,8 @@ Creates `http.ts`, `known-types.ts`, `source.ts`, and `generated/` under `apiRoo
 ### `generate`
 
 ```bash
-openapi-codegen generate --source <key> [--source <key2> ...] [--spec <path>] [--check] [--accept-base]
-openapi-codegen generate --all [--check] [--accept-base]
+typeforge generate --source <key> [--source <key2> ...] [--spec <path>] [--check] [--accept-base]
+typeforge generate --all [--check] [--accept-base]
 ```
 
 `--all` walks every directory under `apiRoot` that contains `source.ts`.
@@ -78,13 +80,13 @@ Updates `generated/base.ts` and patches `models.ts` `BaseResponse` to match the 
 1. `--spec <path>`
 2. Environment variable `OPENAPI_SPEC_<KEY>` (key uppercased, `-` → `_`)
 3. `spec` field in `<apiRoot>/<key>/source.ts`
-4. `openapi-codegen.local.json` (gitignored)
+4. `typeforge.local.json` (gitignored)
 5. `<apiRoot>/<key>/spec.json` snapshot
 
 ## Type-safe `source.ts`
 
 ```ts
-import { defineSourceConfig } from "@openmirai/openapi-codegen";
+import { defineSourceConfig } from "@openmirai/typeforge";
 
 export default defineSourceConfig({
   spec: "./specs/acme.json",

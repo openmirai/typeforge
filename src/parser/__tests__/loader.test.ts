@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { loadSpec, resolveSpecSource } from "../loader";
 import type { JsonValue } from "../../json/types";
 
-const testDir = join(tmpdir(), `openapi-codegen-loader-${Date.now()}`);
+const testDir = join(tmpdir(), `typeforge-loader-${Date.now()}`);
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
@@ -106,7 +106,7 @@ describe("resolveSpecSource - priority", () => {
 
   it("env var takes priority over local override and snapshot", () => {
     const envSpecPath = writeSpec("env-spec.json", {}),
-      localPath = join(testDir, "openapi-codegen.local.json"),
+      localPath = join(testDir, "typeforge.local.json"),
       snapshotPath = writeSpec("snapshot.json", {});
     writeFileSync(localPath, JSON.stringify({ "core-v2": snapshotPath }));
     vi.stubEnv("OPENAPI_SPEC_CORE_V2", envSpecPath);
@@ -124,7 +124,7 @@ describe("resolveSpecSource - priority", () => {
   it("local override takes priority over snapshot", () => {
     const specPath = writeSpec("local-spec.json", {}),
       snapshotPath = writeSpec("snapshot.json", {}),
-      localPath = join(testDir, "openapi-codegen.local.json");
+      localPath = join(testDir, "typeforge.local.json");
     writeFileSync(localPath, JSON.stringify({ "core-v2": specPath }));
 
     const source = resolveSpecSource("core-v2", {
@@ -148,7 +148,7 @@ describe("resolveSpecSource - priority", () => {
 
   it("sourceConfigSpec takes priority over local override and snapshot", () => {
     const specPath = writeSpec("source-config-spec.json", {}),
-      localPath = join(testDir, "openapi-codegen.local.json"),
+      localPath = join(testDir, "typeforge.local.json"),
       snapshotPath = writeSpec("snapshot.json", {});
     writeFileSync(localPath, JSON.stringify({ "core-v2": snapshotPath }));
 
@@ -178,7 +178,7 @@ describe("resolveSpecSource - priority", () => {
   });
 
   it("local override file without entry for source key falls through to snapshot", () => {
-    const localPath = join(testDir, "openapi-codegen.local.json"),
+    const localPath = join(testDir, "typeforge.local.json"),
       snapshotPath = writeSpec("snapshot.json", {});
     // Local file exists but has different source key
     writeFileSync(
@@ -237,7 +237,7 @@ describe("resolveSpecSource - error when no spec found", () => {
       const message = getErrorMessage(error);
       expect(message).toContain("--spec flag");
       expect(message).toContain("OPENAPI_SPEC_CORE_V2");
-      expect(message).toContain("openapi-codegen.local.json");
+      expect(message).toContain("typeforge.local.json");
       expect(message).toContain("committed snapshot");
     }
   });
@@ -248,7 +248,7 @@ describe("resolveSpecSource - error when no spec found", () => {
       expect.fail("should have thrown");
     } catch (error) {
       const message = getErrorMessage(error);
-      expect(message).toContain("openapi-codegen/spec-not-found");
+      expect(message).toContain("typeforge/spec-not-found");
       expect(message).toContain("help:");
     }
   });

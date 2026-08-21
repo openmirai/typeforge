@@ -77,7 +77,7 @@ export function emitRoutesFile(options: RoutesEmitterOptions): string {
     "import {",
     "  buildRouteFromHandlers,",
     "  createRouteHandlers,",
-    '} from "@openmirai/openapi-codegen/routes";',
+    '} from "@openmirai/typeforge/routes";',
     "",
     ...renderRouteParamsType(entries),
     `export enum ${options.routeEnumName} {`,

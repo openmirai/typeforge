@@ -33,7 +33,7 @@ describe("e2e cli init", () => {
     tempRoots.push(root);
     mkdirSync(join(root, "src/api"), { recursive: true });
     writeFileSync(
-      join(root, "openapi-codegen.json"),
+      join(root, "typeforge.json"),
       JSON.stringify({ apiRoot: "src/api" }),
       "utf8"
     );
@@ -78,6 +78,29 @@ describe("e2e cli init", () => {
     expect(readFileSync(join(root, "src/api/http.ts"), "utf8")).toContain(
       "// keep me"
     );
+  });
+
+  it("uses legacy project config without writing a duplicate", () => {
+    const root = join(fixtureRoot, "layouts", `cli-init-legacy-${Date.now()}`);
+    tempRoots.push(root);
+    mkdirSync(root, { recursive: true });
+    writeFileSync(
+      join(root, "openapi-codegen.json"),
+      JSON.stringify({ apiRoot: "legacy/api" }),
+      "utf8"
+    );
+
+    const result = runCli(root, [
+      "init",
+      "--source",
+      "atlas",
+      "--client",
+      "fetch",
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(join(root, "legacy/api/http.ts"))).toBe(true);
+    expect(existsSync(join(root, "typeforge.json"))).toBe(false);
   });
 });
 

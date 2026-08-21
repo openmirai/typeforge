@@ -42,7 +42,7 @@ export async function loadSpec(source: SpecSource): Promise<JsonValue> {
  *   1. --spec CLI flag
  *   2. OPENAPI_SPEC_<UPPER_KEY> env var
  *   3. source.ts `spec` property (project-relative path from config)
- *   4. openapi-codegen.local.json (gitignored per-machine override)
+ *   4. typeforge.local.json (gitignored per-machine override)
  *   5. committed snapshot at snapshotPath
  *
  * Throws a human-readable error (no stack trace as first line) when nothing is found.
@@ -74,7 +74,13 @@ export function resolveSpecSource(
   }
 
   // 4. Local override file
-  const localPath = opts.localOverridePath ?? "./openapi-codegen.local.json";
+  const defaultLocalPath = "./typeforge.local.json";
+  const legacyLocalPath = "./openapi-codegen.local.json";
+  const localPath =
+    opts.localOverridePath ??
+    (existsSync(defaultLocalPath) || !existsSync(legacyLocalPath)
+      ? defaultLocalPath
+      : legacyLocalPath);
   if (existsSync(localPath)) {
     try {
       const localData = readJsonObject(readFileSync(localPath, "utf8")),
@@ -134,16 +140,16 @@ function buildNotFoundMessage(
       `  --spec flag:                ${specFlagNote}`,
       `  ${envVarName} env:   ${envNote}`,
       `  source.ts spec:             ${sourceConfigNote}`,
-      `  openapi-codegen.local.json: ${localNote}`,
+      `  local override:             ${localNote}`,
       `  committed snapshot:         ${snapshotNote}`,
     ].join("\n"),
     fixCommands = [
-      `openapi-codegen generate --source ${sourceKey} --spec ./path/to/swagger.json`,
+      `typeforge generate --source ${sourceKey} --spec ./path/to/swagger.json`,
       `export ${envVarName}=./path/to/swagger.json`,
     ];
 
   const diagnostic = formatDiagnostic({
-    code: "openapi-codegen/spec-not-found",
+    code: "typeforge/spec-not-found",
     help: "Provide one of the resolution paths above, for example with --spec or an env var.",
     message: `No OpenAPI spec found for source "${sourceKey}"`,
     severity: "error",

@@ -116,7 +116,8 @@ describe("integration: end-to-end type safety", () => {
     } catch (error) {
       const execError = error as { stdout?: string; stderr?: string };
       throw new Error(
-        [execError.stdout, execError.stderr].filter(Boolean).join("\n")
+        [execError.stdout, execError.stderr].filter(Boolean).join("\n"),
+        { cause: error }
       );
     }
     expect(output).toBeDefined();
@@ -137,9 +138,9 @@ describe("integration: monolith layouts", () => {
     const root = join(fixtureRoot, "layouts", `fetch-${Date.now()}`);
     tempRoots.push(root);
     createMonolithProject({
-      httpContent: `import { createFetchAdapter } from "@openmirai/openapi-codegen/adapters/fetch";
+      httpContent: `import { createFetchAdapter } from "@openmirai/typeforge/adapters/fetch";
 export const httpFetch = createFetchAdapter({ baseURL: "https://example.com" });
-export type { HTTPFetch, HTTPFetchConfig } from "@openmirai/openapi-codegen/adapters/fetch";
+export type { HTTPFetch, HTTPFetchConfig } from "@openmirai/typeforge/adapters/fetch";
 `,
       root,
       sourceKey: "atlas",
@@ -178,7 +179,7 @@ export type { HTTPFetch, HTTPFetchConfig } from "@openmirai/openapi-codegen/adap
       `import {
   buildRouteFromHandlers,
   createRouteHandlers,
-} from "@openmirai/openapi-codegen/routes";
+} from "@openmirai/typeforge/routes";
 
 export enum RouteTargets {
   LEGACY_PING = "/v1/legacy/ping",

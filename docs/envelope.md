@@ -52,4 +52,4 @@ recognized without changing their source schemas.
 
 ## accept-base
 
-`openapi-codegen accept-base --source atlas` regenerates `generated/base.ts` and rewrites `BaseResponse` in `models.ts` to match the spec. Use it when the envelope shape in the spec is the source of truth and `models.ts` is stale. Do not combine with `--check`.
+`typeforge accept-base --source atlas` regenerates `generated/base.ts` and rewrites `BaseResponse` in `models.ts` to match the spec. Use it when the envelope shape in the spec is the source of truth and `models.ts` is stale. Do not combine with `--check`.

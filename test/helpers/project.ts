@@ -37,7 +37,7 @@ export function createMonolithProject(options: MonolithProjectOptions): {
   mkdirSync(join(options.root, apiRoot), { recursive: true });
 
   writeFileSync(
-    join(options.root, "openapi-codegen.json"),
+    join(options.root, "typeforge.json"),
     JSON.stringify({ apiRoot }),
     "utf8"
   );

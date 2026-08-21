@@ -117,19 +117,19 @@ export function parseArgs(argv: Array<string>): ParsedArgs {
 }
 
 function printHelp(): void {
-  process.stdout.write(`openapi-codegen — headless OpenAPI TypeScript codegen
+  process.stdout.write(`typeforge — headless OpenAPI TypeScript codegen
 
 Usage:
-  openapi-codegen init --source <key> --client axios|fetch|custom [--layout monolith|packages]
-  openapi-codegen generate --source <key> [--source <key2> ...] [--spec <path>] [--check] [--accept-base]
-  openapi-codegen generate --all [--check] [--accept-base]
-  openapi-codegen check --source <key> [--spec <path>]
-  openapi-codegen accept-base --source <key> [--spec <path>]
+  typeforge init --source <key> --client axios|fetch|custom [--layout monolith|packages]
+  typeforge generate --source <key> [--source <key2> ...] [--spec <path>] [--check] [--accept-base]
+  typeforge generate --all [--check] [--accept-base]
+  typeforge check --source <key> [--spec <path>]
+  typeforge accept-base --source <key> [--spec <path>]
 
 Multi-source generate:
   Provide multiple --source flags, or use --all to generate every source under apiRoot.
   Configure per-source spec paths in each source.ts:
-    import { defineSourceConfig } from "@openmirai/openapi-codegen";
+    import { defineSourceConfig } from "@openmirai/typeforge";
     export default defineSourceConfig({ spec: "./specs/acme.json", ... });
 `);
 }
@@ -137,7 +137,7 @@ Multi-source generate:
 async function runGenerate(args: ParsedArgs): Promise<number> {
   if (args.check === true && args.acceptBase === true) {
     process.stderr.write(
-      "openapi-codegen: --accept-base is not allowed with --check\n"
+      "typeforge: --accept-base is not allowed with --check\n"
     );
     return 1;
   }
@@ -155,9 +155,7 @@ async function runGenerate(args: ParsedArgs): Promise<number> {
   }
 
   if (sources.length === 0) {
-    process.stderr.write(
-      "openapi-codegen: --source <key> or --all is required\n"
-    );
+    process.stderr.write("typeforge: --source <key> or --all is required\n");
     return 1;
   }
 
@@ -180,20 +178,18 @@ async function runGenerate(args: ParsedArgs): Promise<number> {
       if (args.check === true) {
         if (result.changed.length > 0) {
           process.stderr.write(
-            `openapi-codegen: stale generated files for "${sourceKey}":\n`
+            `typeforge: stale generated files for "${sourceKey}":\n`
           );
           for (const file of result.changed) {
             process.stderr.write(`  ${file}\n`);
           }
           exitCode = 1;
         } else {
-          process.stdout.write(
-            `openapi-codegen: "${sourceKey}" is up to date\n`
-          );
+          process.stdout.write(`typeforge: "${sourceKey}" is up to date\n`);
         }
       } else {
         process.stdout.write(
-          `openapi-codegen: generated ${result.files} files for "${sourceKey}" (${result.changed.length} changed)\n`
+          `typeforge: generated ${result.files} files for "${sourceKey}" (${result.changed.length} changed)\n`
         );
       }
     } catch (error) {
@@ -221,9 +217,7 @@ async function main(): Promise<void> {
 
   if (args.command === "init") {
     if (args.source === undefined || args.client === undefined) {
-      process.stderr.write(
-        "openapi-codegen: init requires --source and --client\n"
-      );
+      process.stderr.write("typeforge: init requires --source and --client\n");
       process.exit(1);
     }
 
@@ -260,7 +254,7 @@ async function main(): Promise<void> {
     process.exit(await runGenerate(args));
   }
 
-  process.stderr.write(`openapi-codegen: unknown command "${args.command}"\n`);
+  process.stderr.write(`typeforge: unknown command "${args.command}"\n`);
   printHelp();
   process.exit(1);
 }

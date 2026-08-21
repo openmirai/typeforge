@@ -1,6 +1,9 @@
-export interface OpenApiCodegenConfig {
+export interface TypeforgeConfig {
   apiRoot?: string;
 }
+
+/** @deprecated Use `TypeforgeConfig`. */
+export type OpenApiCodegenConfig = TypeforgeConfig;
 
 export type GenerationMode = "authoritative" | "merge";
 
