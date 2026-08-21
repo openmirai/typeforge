@@ -28,10 +28,10 @@ describe("config/load edge cases", () => {
     );
     tempRoots.push(cwd);
     mkdirSync(cwd, { recursive: true });
-    writeFileSync(join(cwd, "openapi-codegen.json"), "{not json", "utf8");
+    writeFileSync(join(cwd, "typeforge.json"), "{not json", "utf8");
     writeFileSync(
       join(cwd, "package.json"),
-      JSON.stringify({ openapiCodegen: "invalid" }),
+      JSON.stringify({ typeforge: "invalid" }),
       "utf8"
     );
 

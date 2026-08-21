@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import { loadProjectConfig } from "../config/load";
-import type { OpenApiCodegenConfig } from "../config/types";
+import type { TypeforgeConfig } from "../config/types";
 import { DEFAULT_API_ROOT } from "../config/types";
 
 export type HttpClient = "axios" | "fetch" | "custom";
@@ -16,7 +16,7 @@ export interface InitOptions {
 }
 
 const AXIOS_HTTP_TEMPLATE = `import axiosBase from "axios";
-import { createAxiosAdapter } from "@openmirai/openapi-codegen/adapters/axios";
+import { createAxiosAdapter } from "@openmirai/typeforge/adapters/axios";
 
 const axios = axiosBase.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -37,19 +37,19 @@ axios.interceptors.response.use(
 
 export const httpFetch = createAxiosAdapter(axios);
 export { axios };
-export type { HTTPFetch, HTTPFetchConfig } from "@openmirai/openapi-codegen/adapters/axios";
+export type { HTTPFetch, HTTPFetchConfig } from "@openmirai/typeforge/adapters/axios";
 `;
 
-const FETCH_HTTP_TEMPLATE = `import { createFetchAdapter } from "@openmirai/openapi-codegen/adapters/fetch";
+const FETCH_HTTP_TEMPLATE = `import { createFetchAdapter } from "@openmirai/typeforge/adapters/fetch";
 
 export const httpFetch = createFetchAdapter({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
 });
 
-export type { HTTPFetch, HTTPFetchConfig } from "@openmirai/openapi-codegen/adapters/fetch";
+export type { HTTPFetch, HTTPFetchConfig } from "@openmirai/typeforge/adapters/fetch";
 `;
 
-const CUSTOM_HTTP_TEMPLATE = `import type { HTTPFetch, HTTPFetchConfig } from "@openmirai/openapi-codegen/http";
+const CUSTOM_HTTP_TEMPLATE = `import type { HTTPFetch, HTTPFetchConfig } from "@openmirai/typeforge/http";
 
 export type { HTTPFetch, HTTPFetchConfig };
 
@@ -90,11 +90,11 @@ export const httpFetch: HTTPFetch = {
 };
 `;
 
-const SOURCE_TEMPLATE = `import { defineSourceConfig } from "@openmirai/openapi-codegen";
+const SOURCE_TEMPLATE = `import { defineSourceConfig } from "@openmirai/typeforge";
 
 export default defineSourceConfig({
   // Path to the OpenAPI spec file, relative to the project root.
-  // Set this so \`openapi-codegen generate --source <key>\` (or --all) works
+  // Set this so \`typeforge generate --source <key>\` (or --all) works
   // without a per-invocation --spec flag.
   // spec: "./specs/acme.json",
   pathPrefix: "/api/acme/v3",
@@ -155,11 +155,13 @@ export function initProject(options: InitOptions): {
 } {
   const cwd = options.cwd ?? process.cwd();
   const layout = options.layout ?? "monolith";
-  const configPath = resolve(cwd, "openapi-codegen.json");
+  const configPath = resolve(cwd, "typeforge.json");
+  const legacyConfigPath = resolve(cwd, "openapi-codegen.json");
   const projectConfig = loadProjectConfig(cwd);
-  const apiRoot = existsSync(configPath)
-    ? (projectConfig.apiRoot ?? DEFAULT_API_ROOT)
-    : defaultApiRoot(layout);
+  const apiRoot =
+    existsSync(configPath) || existsSync(legacyConfigPath)
+      ? (projectConfig.apiRoot ?? DEFAULT_API_ROOT)
+      : defaultApiRoot(layout);
   const apiRootPath = resolve(cwd, apiRoot);
   const sourceDir = join(apiRootPath, options.sourceKey);
 
@@ -197,9 +199,9 @@ export function initProject(options: InitOptions): {
     skipped.push(knownTypesPath);
   }
 
-  const configWritePath = resolve(cwd, "openapi-codegen.json");
-  if (!existsSync(configWritePath)) {
-    const config: OpenApiCodegenConfig = { apiRoot };
+  const configWritePath = resolve(cwd, "typeforge.json");
+  if (!existsSync(configWritePath) && !existsSync(legacyConfigPath)) {
+    const config: TypeforgeConfig = { apiRoot };
     writeFileSync(
       configWritePath,
       `${JSON.stringify(config, null, 2)}\n`,

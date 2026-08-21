@@ -1,7 +1,7 @@
 {
-  "name": "@openmirai/openapi-codegen",
+  "name": "@openmirai/typeforge",
   "version": "0.1.7",
-  "description": "Headless OpenAPI to TypeScript codegen CLI and HTTPFetch runtime",
+  "description": "Typeforge: headless OpenAPI to TypeScript codegen CLI and HTTPFetch runtime",
   "homepage": "https://github.com/openmirai/mirai-openapi-codegen#readme",
   "bugs": {
     "url": "https://github.com/openmirai/mirai-openapi-codegen/issues"
@@ -12,9 +12,11 @@
     "url": "git+https://github.com/openmirai/mirai-openapi-codegen.git"
   },
   "bin": {
-    "openapi-codegen": "./dist/cli.js"
+    "openapi-codegen": "./dist/cli.js",
+    "typeforge": "./dist/cli.js"
   },
   "files": [
+    "assets/typeforge-logo.png",
     "dist"
   ],
   "type": "module",

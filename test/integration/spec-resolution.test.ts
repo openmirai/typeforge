@@ -48,19 +48,19 @@ describe("integration: spec resolution", () => {
     }
   });
 
-  it("resolves openapi-codegen.local.json override", () => {
+  it("resolves typeforge.local.json override", () => {
     const root = join(fixtureRoot, "layouts", `local-spec-${Date.now()}`);
     tempRoots.push(root);
     mkdirSync(root, { recursive: true });
     const specPath = join(fixtureRoot, "specs/envelope-list.json");
     writeFileSync(
-      join(root, "openapi-codegen.local.json"),
+      join(root, "typeforge.local.json"),
       JSON.stringify({ atlas: specPath }),
       "utf8"
     );
 
     const source = resolveSpecSource("atlas", {
-      localOverridePath: join(root, "openapi-codegen.local.json"),
+      localOverridePath: join(root, "typeforge.local.json"),
     });
     expect(source.kind).toBe("local-override");
   });

@@ -20,11 +20,7 @@ export function formatRecursiveRefError(
   schemaPath: string
 ): string {
   const lines = [
-    bold(
-      red(
-        `openapi-codegen: recursive schema reference in source "${sourceKey}"`
-      )
-    ),
+    bold(red(`typeforge: recursive schema reference in source "${sourceKey}"`)),
     "",
     bold("Cycle:"),
     `  ${cycle.join(" → ")}`,
@@ -35,7 +31,7 @@ export function formatRecursiveRefError(
     bold("Fix:"),
     "  • Add a known-type override in known-types.ts for this shape, or",
     "  • Simplify the OpenAPI schema to remove the circular reference",
-    cyan(`  • openapi-codegen generate --source ${sourceKey} --spec <path>`),
+    cyan(`  • typeforge generate --source ${sourceKey} --spec <path>`),
   ];
   return lines.join("\n");
 }

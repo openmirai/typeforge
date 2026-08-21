@@ -399,7 +399,7 @@ describe("integration: multi-source", () => {
     mkdirSync(join(root, "src/api/wrapped"), { recursive: true });
     mkdirSync(join(root, "src/api/raw"), { recursive: true });
     writeFileSync(
-      join(root, "openapi-codegen.json"),
+      join(root, "typeforge.json"),
       JSON.stringify({ apiRoot: "src/api" }),
       "utf8"
     );

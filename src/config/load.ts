@@ -3,20 +3,20 @@ import { join, resolve } from "node:path";
 
 import { readJsonObject } from "../json/types";
 import type {
-  OpenApiCodegenConfig,
+  TypeforgeConfig,
   QueryExtendsConfig,
   SourceConfig,
 } from "./types";
 import { DEFAULT_API_ROOT } from "./types";
 
-function readOptionalJson(path: string): OpenApiCodegenConfig {
+function readOptionalJson(path: string): TypeforgeConfig {
   if (!existsSync(path)) {
     return {};
   }
 
   try {
     const raw = readJsonObject(readFileSync(path, "utf8"));
-    const config: OpenApiCodegenConfig = {};
+    const config: TypeforgeConfig = {};
     if (typeof raw["apiRoot"] === "string") {
       config.apiRoot = raw["apiRoot"];
     }
@@ -26,25 +26,25 @@ function readOptionalJson(path: string): OpenApiCodegenConfig {
   }
 }
 
-function readPackageConfig(path: string): OpenApiCodegenConfig {
+function readPackageConfig(path: string): TypeforgeConfig {
   if (!existsSync(path)) {
     return {};
   }
 
   try {
     const raw = readJsonObject(readFileSync(path, "utf8"));
-    const openapiCodegen = raw["openapiCodegen"];
+    const typeforge = raw["typeforge"] ?? raw["openapiCodegen"];
     if (
-      typeof openapiCodegen !== "object" ||
-      openapiCodegen === null ||
-      Array.isArray(openapiCodegen)
+      typeof typeforge !== "object" ||
+      typeforge === null ||
+      Array.isArray(typeforge)
     ) {
       return {};
     }
 
-    const config: OpenApiCodegenConfig = {};
-    if (typeof openapiCodegen["apiRoot"] === "string") {
-      config.apiRoot = openapiCodegen["apiRoot"];
+    const config: TypeforgeConfig = {};
+    if (typeof typeforge["apiRoot"] === "string") {
+      config.apiRoot = typeforge["apiRoot"];
     }
     return config;
   } catch {
@@ -199,12 +199,17 @@ function parseQueryExtends(content: string): QueryExtendsConfig | undefined {
   return Object.keys(config).length > 0 ? config : undefined;
 }
 
-export function loadProjectConfig(cwd: string): OpenApiCodegenConfig {
-  const fromJson = readOptionalJson(resolve(cwd, "openapi-codegen.json"));
+export function loadProjectConfig(cwd: string): TypeforgeConfig {
+  const fromJson = readOptionalJson(resolve(cwd, "typeforge.json"));
+  const fromLegacyJson = readOptionalJson(resolve(cwd, "openapi-codegen.json"));
   const fromPackage = readPackageConfig(resolve(cwd, "package.json"));
 
   return {
-    apiRoot: fromJson.apiRoot ?? fromPackage.apiRoot ?? DEFAULT_API_ROOT,
+    apiRoot:
+      fromJson.apiRoot ??
+      fromLegacyJson.apiRoot ??
+      fromPackage.apiRoot ??
+      DEFAULT_API_ROOT,
   };
 }
 

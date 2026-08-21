@@ -31,13 +31,13 @@ describe("formatDiagnostic", () => {
 
   it("formats an error with code, message, and help like oxlint", () => {
     const output = formatDiagnostic({
-      code: "openapi-codegen/spec-not-found",
+      code: "typeforge/spec-not-found",
       help: "Provide --spec or set OPENAPI_SPEC_CORE_V2.",
       message: 'No OpenAPI spec found for source "core-v2"',
     });
 
     const plain = stripVTControlCharacters(output);
-    expect(plain).toContain("openapi-codegen/spec-not-found");
+    expect(plain).toContain("typeforge/spec-not-found");
     expect(plain).toContain('No OpenAPI spec found for source "core-v2"');
     expect(plain).toContain("help:");
     expect(plain).toContain("Provide --spec or set OPENAPI_SPEC_CORE_V2.");
@@ -45,7 +45,7 @@ describe("formatDiagnostic", () => {
 
   it("formats a snippet with file location and caret", () => {
     const output = formatDiagnostic({
-      code: "openapi-codegen/base-response-drift",
+      code: "typeforge/base-response-drift",
       help: "Update models.ts or run with --accept-base.",
       message: "BaseResponse does not match the OpenAPI envelope",
       snippet: {
@@ -68,7 +68,7 @@ describe("formatDiagnostic", () => {
   it("suppresses ANSI codes under NO_COLOR", () => {
     process.env["NO_COLOR"] = "1";
     const output = formatDiagnostic({
-      code: "openapi-codegen/spec-not-found",
+      code: "typeforge/spec-not-found",
       message: "missing spec",
     });
     expect(output).toBe(output.replaceAll("\u001b", ""));
