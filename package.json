@@ -1,15 +1,15 @@
 {
   "name": "@openmirai/typeforge",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Typeforge: headless OpenAPI to TypeScript codegen CLI and HTTPFetch runtime",
-  "homepage": "https://github.com/openmirai/mirai-openapi-codegen#readme",
+  "homepage": "https://github.com/openmirai/typeforge#readme",
   "bugs": {
-    "url": "https://github.com/openmirai/mirai-openapi-codegen/issues"
+    "url": "https://github.com/openmirai/typeforge/issues"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/openmirai/mirai-openapi-codegen.git"
+    "url": "git+https://github.com/openmirai/typeforge.git"
   },
   "bin": {
     "openapi-codegen": "./dist/cli.js",
