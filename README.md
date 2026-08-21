@@ -171,9 +171,10 @@ Inferred from success response schemas. Details: [docs/envelope.md](docs/envelop
 
 Set `unwrapResponseData: true` when the project's injected `HTTPFetch`
 normalizes successful envelope bodies before returning `{ data }`. Every
-operation whose success schema contains a `success` field then receives its
-`data` payload type. Data-only objects in mixed specs remain raw. Success
-envelopes without a `data` field receive the `null` type,
+operation whose success schema is recognized as an API envelope then receives
+its `data` payload type. Data-only objects and business payloads that also
+contain `success` remain raw. Metadata-only envelopes without a `data` field
+receive the `null` type,
 matching clients that normalize an omitted payload to `null`.
 The default remains envelope-preserving and is compatible with the bundled
 Axios and Fetch adapters.

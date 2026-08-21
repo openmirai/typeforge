@@ -1,5 +1,6 @@
 import {
   buildBaseResponseInterface,
+  isEnvelopeSchema,
   matchesEnvelopeShape,
 } from "../../envelope-guard/index";
 import type { EnvelopeMode, EnvelopeShape } from "../../envelope-guard/index";
@@ -246,8 +247,8 @@ function renderResponseType(
       : undefined;
   const isSuccessEnvelope =
     resolved.kind === "object" &&
-    resolved.properties !== undefined &&
-    resolved.properties.success !== undefined;
+    resolved.properties?.success !== undefined &&
+    isEnvelopeSchema(schema, options.source.components.schemas);
   if (options.unwrapResponseData === true && isSuccessEnvelope) {
     if (dataSchema === undefined) {
       return `export type ${typeName}Response = null;`;

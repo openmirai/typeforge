@@ -215,6 +215,17 @@ describe("integration: monolith generate", () => {
       "export type POSTApiAcmeV3EmptyResponse = null;"
     );
 
+    const rawSuccessPayloadType = readFileSync(
+      join(generatedDir, "types/api/acme/v3/batch-result/DELETE.d.ts"),
+      "utf8"
+    );
+    expect(rawSuccessPayloadType).toContain("deletedCount?: number");
+    expect(rawSuccessPayloadType).toContain("requested?: number");
+    expect(rawSuccessPayloadType).toContain("success: boolean");
+    expect(rawSuccessPayloadType).not.toContain(
+      "DELETEApiAcmeV3BatchResultResponse = null"
+    );
+
     const composedEnvelopeType = readFileSync(
       join(generatedDir, "types/api/acme/v3/composed/GET.d.ts"),
       "utf8"

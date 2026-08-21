@@ -112,6 +112,27 @@
         }
       }
     },
+    "/api/acme/v3/batch-result": {
+      "delete": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "deletedCount": { "type": "integer" },
+                    "requested": { "type": "integer" }
+                  },
+                  "required": ["success"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/acme/v3/composed": {
       "get": {
         "responses": {
