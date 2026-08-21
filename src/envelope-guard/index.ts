@@ -98,9 +98,31 @@ export function matchesEnvelopeShape(
   return actual !== undefined && fingerprint(actual) === fingerprint(expected);
 }
 
+const ENVELOPE_METADATA_FIELDS = new Set([
+  "error",
+  "message",
+  "requestId",
+  "success",
+  "timestamp",
+]);
+
 function looksLikeEnvelope(shape: EnvelopeShape): boolean {
   const names = new Set(shape.fields.map((field) => field.name));
-  return names.has("data") || names.has("success") || names.has("message");
+  if (names.has("data")) {
+    return true;
+  }
+  if (!names.has("success")) {
+    return false;
+  }
+  return [...names].every((name) => ENVELOPE_METADATA_FIELDS.has(name));
+}
+
+export function isEnvelopeSchema(
+  schema: IRSchema,
+  components: Record<string, IRSchema>
+): boolean {
+  const shape = extractEnvelopeShape(schema, components);
+  return shape !== undefined && looksLikeEnvelope(shape);
 }
 
 export function collectOperationEnvelopes(

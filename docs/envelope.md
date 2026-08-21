@@ -2,7 +2,10 @@
 
 The generator inspects each operation’s success JSON schema and classifies the spec into one of three **envelope modes**. You do not set the mode in `source.ts`; it is inferred.
 
-An object “looks like an envelope” when it has a `data`, `success`, or `message` field.
+An object “looks like an envelope” when it has a `data` field, or when it has a
+`success` field and every other field is envelope metadata (`error`, `message`,
+`requestId`, or `timestamp`). A business payload such as
+`{ success, deletedCount, requested }` remains raw.
 
 ## shared
 
@@ -41,9 +44,9 @@ Callers still return the HTTPFetch `{ data }` payload (the transport wrapper), n
 ## HTTP clients that unwrap envelopes
 
 Set `unwrapResponseData: true` only when the injected `HTTPFetch` already
-normalizes `{ success, data }` bodies. Responses containing `success` emit the
-inner `data` payload type, or `null` when `data` is absent. Data-only objects
-remain raw, matching clients that use `success` to distinguish an API envelope.
+normalizes `{ success, data }` bodies. Recognized envelopes emit the inner
+`data` payload type, or `null` when `data` is absent. Business payloads
+containing `success` plus domain fields and data-only cursor objects remain raw.
 Envelope objects composed through component references and `allOf` are
 recognized without changing their source schemas.
 
