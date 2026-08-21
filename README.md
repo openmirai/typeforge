@@ -7,7 +7,7 @@
 Headless **OpenAPI / Swagger → TypeScript** codegen. The CLI is `typeforge`. It reads a spec, writes typed route enums, request types, and HTTP caller functions, and never talks to a network.
 
 - **npm:** [`@openmirai/typeforge`](https://www.npmjs.com/package/@openmirai/typeforge)
-- **GitHub:** [openmirai/mirai-openapi-codegen](https://github.com/openmirai/mirai-openapi-codegen)
+- **GitHub:** [openmirai/typeforge](https://github.com/openmirai/typeforge)
 
 You own `http.ts` (the `HTTPFetch` adapter). Generated files import that adapter — they do not invent axios/fetch calls inline.
 
@@ -252,7 +252,7 @@ Publishes go through [npm Trusted Publishing](https://docs.npmjs.com/trusted-pub
 | | Value |
 | --- | --- |
 | npm package | `@openmirai/typeforge` |
-| GitHub repo | `openmirai/mirai-openapi-codegen` |
+| GitHub repo | `openmirai/typeforge` |
 | Workflow | `.github/workflows/publish.yml` |
 | Tag | `v*` (e.g. `v0.1.3`) |
 
