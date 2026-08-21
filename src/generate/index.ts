@@ -242,6 +242,10 @@ export async function generateForSource(
     typeEmitterOptions.resolveMapKeyRefs =
       context.sourceConfig.resolveMapKeyRefs;
   }
+  if (context.sourceConfig.unwrapResponseData !== undefined) {
+    typeEmitterOptions.unwrapResponseData =
+      context.sourceConfig.unwrapResponseData;
+  }
   if (primaryEnvelope !== undefined) {
     typeEmitterOptions.sharedEnvelope = primaryEnvelope;
   }

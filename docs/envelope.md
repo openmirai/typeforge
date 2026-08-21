@@ -38,6 +38,15 @@ Example from `test/fixtures/specs/mixed-envelope.json`:
 
 Callers still return the HTTPFetch `{ data }` payload (the transport wrapper), not a TypeScript `as` cast. Envelope unwrap is a **type** concern: `TResponse` is `BaseResponse<T>` or the raw body, depending on the operation.
 
+## HTTP clients that unwrap envelopes
+
+Set `unwrapResponseData: true` only when the injected `HTTPFetch` already
+normalizes `{ success, data }` bodies. Responses containing `success` emit the
+inner `data` payload type, or `null` when `data` is absent. Data-only objects
+remain raw, matching clients that use `success` to distinguish an API envelope.
+Envelope objects composed through component references and `allOf` are
+recognized without changing their source schemas.
+
 ## accept-base
 
 `openapi-codegen accept-base --source atlas` regenerates `generated/base.ts` and rewrites `BaseResponse` in `models.ts` to match the spec. Use it when the envelope shape in the spec is the source of truth and `models.ts` is stale. Do not combine with `--check`.

@@ -121,6 +121,10 @@ function parseSourceConfigContent(content: string): SourceConfig {
     config.resolveMapKeyRefs = false;
   }
 
+  if (/unwrapResponseData:\s*true/.test(normalized)) {
+    config.unwrapResponseData = true;
+  }
+
   if (/tanstackQuery:\s*true/.test(normalized)) {
     config.tanstackQuery = true;
   }
