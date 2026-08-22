@@ -38,20 +38,26 @@ jobs:
         with:
           ref: ${{ inputs.release_ref || github.ref }}
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          check-latest: true
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
       - uses: pnpm/action-setup@v6
         with:
           run_install: false
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24.19.0
-          registry-url: https://registry.npmjs.org
-          package-manager-cache: false
-
       - name: Verify npm Trusted Publishing runtime
         run: |
           set -euo pipefail
-          test "$(node --version)" = "v24.19.0"
+          node -e '
+            const major = Number(process.versions.node.split(".")[0]);
+            if (major < 24) {
+              throw new Error(`Node.js ${process.versions.node} is unsupported; require Node.js >=24`);
+            }
+          '
           npm_version="$(npm --version)"
           node -e '
             const [major, minor, patch] = process.argv[1].split(".").map(Number);

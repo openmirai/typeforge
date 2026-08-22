@@ -67,7 +67,7 @@
     "pretest": "pnpm build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "prepare": "husky",
+    "hooks:install": "git config --local core.hooksPath \"$(git rev-parse --absolute-git-dir)/hooks\" && lefthook install --force",
     "release": "release-it",
     "verify": "pnpm format && pnpm lint && pnpm typecheck && pnpm build && pnpm check:package && pnpm test:coverage"
   },
@@ -82,8 +82,7 @@
     "@types/node": "24.13.3",
     "@vitest/coverage-v8": "4.1.11",
     "axios": "^1.19.0",
-    "husky": "9.1.7",
-    "lint-staged": "17.3.0",
+    "lefthook": "2.1.10",
     "oxfmt": "0.64.0",
     "oxlint": "1.79.0",
     "release-it": "21.0.2",

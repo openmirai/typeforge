@@ -10,8 +10,7 @@
     "test/**/*.ts",
     "vitest.config.ts",
     "tsdown.config.ts",
-    "commitlint.config.ts",
-    "lint-staged.config.ts"
+    "commitlint.config.ts"
   ],
   "exclude": ["test/fixtures/layouts/**"]
 }

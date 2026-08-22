@@ -1,2 +1,4 @@
 allowBuilds:
   esbuild: true
+  # Lefthook's forced postinstall is intentionally blocked; install hooks explicitly.
+  lefthook: false

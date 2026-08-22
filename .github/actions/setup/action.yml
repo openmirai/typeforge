@@ -4,17 +4,19 @@ description: Setup pnpm, cache dependencies, and install packages
 runs:
   using: composite
   steps:
-    - name: Install pnpm
-      uses: pnpm/action-setup@v6
-      with:
-        run_install: false
-
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
-        node-version: 24.19.0
-        cache: pnpm
-        cache-dependency-path: pnpm-lock.yaml
+        node-version-file: .nvmrc
+        check-latest: true
+        package-manager-cache: false
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v6
+      with:
+        cache: true
+        cache_dependency_path: pnpm-lock.yaml
+        run_install: false
 
     - name: Install dependencies
       shell: bash
