@@ -4,13 +4,12 @@ const shared = {
   deps: {
     neverBundle: true,
   },
-  dts: {
-    sourcemap: true,
-  },
+  dts: true,
   fixedExtension: false,
   format: "esm",
+  minify: true,
   outDir: "dist",
-  sourcemap: true,
+  sourcemap: false,
   target: "es2022",
   treeshake: true,
   tsconfig: "tsconfig.json",

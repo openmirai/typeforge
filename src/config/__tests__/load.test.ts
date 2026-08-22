@@ -15,7 +15,7 @@ function sortedStrings(values: Array<string>): Array<string> {
 }
 
 describe("config/load", () => {
-  it("prefers typeforge.json over legacy and package config", () => {
+  it("prefers typeforge.json over package config", () => {
     const cwd = join(
       process.cwd(),
       "test/fixtures/layouts",
@@ -28,45 +28,12 @@ describe("config/load", () => {
       "utf8"
     );
     writeFileSync(
-      join(cwd, "openapi-codegen.json"),
-      JSON.stringify({ apiRoot: "legacy" }),
-      "utf8"
-    );
-    writeFileSync(
       join(cwd, "package.json"),
       JSON.stringify({ typeforge: { apiRoot: "ignored" } }),
       "utf8"
     );
 
     expect(loadProjectConfig(cwd).apiRoot).toBe("packages/utils/src/api");
-  });
-
-  it("reads legacy project config during migration", () => {
-    const jsonCwd = join(
-      process.cwd(),
-      "test/fixtures/layouts",
-      `config-legacy-json-${Date.now()}`
-    );
-    mkdirSync(jsonCwd, { recursive: true });
-    writeFileSync(
-      join(jsonCwd, "openapi-codegen.json"),
-      JSON.stringify({ apiRoot: "legacy/json" }),
-      "utf8"
-    );
-    expect(loadProjectConfig(jsonCwd).apiRoot).toBe("legacy/json");
-
-    const packageCwd = join(
-      process.cwd(),
-      "test/fixtures/layouts",
-      `config-legacy-package-${Date.now()}`
-    );
-    mkdirSync(packageCwd, { recursive: true });
-    writeFileSync(
-      join(packageCwd, "package.json"),
-      JSON.stringify({ openapiCodegen: { apiRoot: "legacy/package" } }),
-      "utf8"
-    );
-    expect(loadProjectConfig(packageCwd).apiRoot).toBe("legacy/package");
   });
 
   it("parses source.ts config fields", () => {

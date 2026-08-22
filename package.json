@@ -1,6 +1,6 @@
 {
   "name": "@openmirai/typeforge",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "description": "Typeforge: headless OpenAPI to TypeScript codegen CLI and HTTPFetch runtime",
   "homepage": "https://github.com/openmirai/typeforge#readme",
   "bugs": {
@@ -12,11 +12,9 @@
     "url": "git+https://github.com/openmirai/typeforge.git"
   },
   "bin": {
-    "openapi-codegen": "./dist/cli.js",
     "typeforge": "./dist/cli.js"
   },
   "files": [
-    "assets/typeforge-logo.png",
     "dist"
   ],
   "type": "module",
@@ -59,6 +57,7 @@
   },
   "scripts": {
     "build": "tsdown",
+    "check:package": "node scripts/check-package.mjs",
     "typecheck": "tsc -p tsconfig.json --pretty false && tsc -p tsconfig.tools.json --pretty false",
     "format": "oxfmt --check .",
     "format:fix": "oxfmt --write .",
@@ -69,7 +68,7 @@
     "test:coverage": "vitest run --coverage",
     "prepare": "husky",
     "release": "release-it",
-    "verify": "pnpm format && pnpm lint && pnpm typecheck && pnpm build && pnpm test:coverage"
+    "verify": "pnpm format && pnpm lint && pnpm typecheck && pnpm build && pnpm check:package && pnpm test:coverage"
   },
   "dependencies": {
     "chalk": "5.6.2"

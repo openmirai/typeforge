@@ -2,8 +2,6 @@
 
 Install `@openmirai/typeforge` from [npmjs](https://www.npmjs.com/package/@openmirai/typeforge). Add a script so the binary resolves from `node_modules/.bin`:
 
-The legacy `openapi-codegen` binary and configuration filenames remain readable during migration, but all new usage should use `typeforge`.
-
 ```json
 {
   "scripts": {

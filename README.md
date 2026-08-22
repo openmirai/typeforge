@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/typeforge-logo.png" alt="Typeforge logo" width="280" />
+  <img src="https://raw.githubusercontent.com/openmirai/typeforge/HEAD/assets/typeforge-logo.png" alt="Typeforge logo" width="280" />
 </p>
 
 # @openmirai/typeforge
@@ -10,10 +10,6 @@ Headless **OpenAPI / Swagger → TypeScript** codegen. The CLI is `typeforge`. I
 - **GitHub:** [openmirai/typeforge](https://github.com/openmirai/typeforge)
 
 You own `http.ts` (the `HTTPFetch` adapter). Generated files import that adapter — they do not invent axios/fetch calls inline.
-
-## Migrating from `@openmirai/openapi-codegen`
-
-Install `@openmirai/typeforge` and update package imports and scripts to use the canonical `typeforge` name. During migration, the package also exposes the legacy `openapi-codegen` binary and reads `openapi-codegen.json`, `openapi-codegen.local.json`, and the `openapiCodegen` package.json key. New projects created by `typeforge init` use the Typeforge names.
 
 ## What it generates
 
