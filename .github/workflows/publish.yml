@@ -38,7 +38,7 @@ jobs:
         with:
           ref: ${{ inputs.release_ref || github.ref }}
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           run_install: false
 
