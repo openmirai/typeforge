@@ -72,23 +72,23 @@
     "verify": "pnpm format && pnpm lint && pnpm typecheck && pnpm build && pnpm check:package && pnpm test:coverage"
   },
   "dependencies": {
-    "chalk": "5.6.2"
+    "chalk": "6.0.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "21.2.1",
-    "@commitlint/config-conventional": "21.2.0",
+    "@commitlint/cli": "21.2.2",
+    "@commitlint/config-conventional": "21.2.2",
     "@commitlint/types": "21.2.0",
-    "@tsconfig/node20": "20.1.8",
+    "@tsconfig/node24": "24.0.5",
     "@types/node": "24.13.3",
     "@vitest/coverage-v8": "4.1.11",
     "axios": "^1.19.0",
     "husky": "9.1.7",
-    "lint-staged": "17.0.8",
-    "oxfmt": "0.63.0",
-    "oxlint": "1.74.0",
+    "lint-staged": "17.3.0",
+    "oxfmt": "0.64.0",
+    "oxlint": "1.79.0",
     "release-it": "21.0.2",
     "tsdown": "0.22.14",
-    "tsx": "4.23.1",
+    "tsx": "4.23.12",
     "typescript": "7.0.2",
     "vitest": "4.1.11"
   },
@@ -101,7 +101,7 @@
     }
   },
   "engines": {
-    "node": ">=20.11"
+    "node": ">=24"
   },
-  "packageManager": "pnpm@10.13.1"
+  "packageManager": "pnpm@11.22.0+sha512.1ff870c4c6133dfd88fb2afc46dd13d47f09c9794b438c6fdb47ca98caf3bc16381ee0be93a091b8e3824cf01f889f46d7d9e20910fb0be1ab0fb5baa80dd621"
 }

@@ -10,7 +10,7 @@ const shared = {
   minify: true,
   outDir: "dist",
   sourcemap: false,
-  target: "es2022",
+  target: "es2024",
   treeshake: true,
   tsconfig: "tsconfig.json",
 } as const;

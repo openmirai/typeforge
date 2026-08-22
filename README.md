@@ -30,7 +30,7 @@ Optional:
 
 ## Install
 
-Requires **Node.js 20.11+** (LTS). Use any package manager.
+Requires **Node.js 24+** (LTS). Use any package manager.
 
 | Package manager | Install |
 | --- | --- |
