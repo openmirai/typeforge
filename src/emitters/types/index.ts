@@ -11,9 +11,11 @@ import type { KnownTypeRule } from "../../plugins/known-types/index";
 import type { IROperation, IRQueryParam, IRSource } from "../../parser/types";
 import type { TsconfigPathsConfig } from "../../utils/tsconfig-paths";
 import { resolveAliasAwareImport } from "../../utils/imports";
-import { renderSchemaType } from "../schema-renderer";
+import { getSchemaTypeDoc, renderSchemaType } from "../schema-renderer";
 import type { SchemaRenderContext } from "../schema-renderer";
 import { resolveObjectSchema } from "../resolve-schema";
+import { renderTypeDoc } from "../tsdoc";
+import type { TypeDoc } from "../tsdoc";
 import {
   getFunctionTypeName,
   getSuccessResponseSchema,
@@ -78,6 +80,33 @@ function formatImportLines(
   }
 
   return lines;
+}
+
+function combineTypeDoc(
+  descriptions: Array<string | undefined>,
+  deprecated: boolean
+): TypeDoc {
+  const documentation: TypeDoc = {};
+  const description = descriptions.find(
+    (candidate) => candidate !== undefined && candidate.trim().length > 0
+  );
+  if (description !== undefined) {
+    documentation.description = description;
+  }
+  if (deprecated) {
+    documentation.deprecated = true;
+  }
+  return documentation;
+}
+
+function documentDeclaration(
+  declaration: string,
+  documentation: TypeDoc
+): string {
+  const comment = renderTypeDoc(documentation);
+  return comment.length === 0
+    ? declaration
+    : [...comment, declaration].join("\n");
 }
 
 function renderParamsInterface(
@@ -155,10 +184,16 @@ function renderParamsInterface(
   }
 
   if (extendsParts.length > 0 && nonCommonParams.length === 0) {
-    return `export type ${typeName}Params = ${extendsParts.join(" & ")};`;
+    return documentDeclaration(
+      `export type ${typeName}Params = ${extendsParts.join(" & ")};`,
+      combineTypeDoc([], operation.deprecated === true)
+    );
   }
 
   const lines: Array<string> = [];
+  lines.push(
+    ...renderTypeDoc(combineTypeDoc([], operation.deprecated === true))
+  );
   if (extendsParts.length > 0) {
     lines.push(
       `export interface ${typeName}Params extends ${extendsParts.join(", ")} {`
@@ -191,6 +226,19 @@ function appendQueryParam(
       knownTypeImports
     )
   );
+  const schemaDocumentation = getSchemaTypeDoc(
+    param.schema,
+    options.source.components.schemas
+  );
+  lines.push(
+    ...renderTypeDoc(
+      combineTypeDoc(
+        [param.description, schemaDocumentation.description],
+        param.deprecated === true || schemaDocumentation.deprecated === true
+      ),
+      "  "
+    )
+  );
   lines.push(`  ${param.name}${optional}: ${type};`);
 }
 
@@ -211,10 +259,24 @@ function renderBodyInterface(
     operation.requestBody.schema,
     createRenderContext(options, `${typeName}Body`, knownTypeImports)
   );
+  const schemaDocumentation = getSchemaTypeDoc(
+    operation.requestBody.schema,
+    options.source.components.schemas
+  );
+  const documentation = combineTypeDoc(
+    [operation.requestBody.description, schemaDocumentation.description],
+    operation.deprecated === true || schemaDocumentation.deprecated === true
+  );
   if (bodyType.startsWith("{")) {
-    return `export interface ${typeName}Body ${bodyType}`;
+    return documentDeclaration(
+      `export interface ${typeName}Body ${bodyType}`,
+      documentation
+    );
   }
-  return `export type ${typeName}Body = ${bodyType};`;
+  return documentDeclaration(
+    `export type ${typeName}Body = ${bodyType};`,
+    documentation
+  );
 }
 
 function resolveSuccessResponseSchema(
@@ -224,7 +286,7 @@ function resolveSuccessResponseSchema(
   return resolveObjectSchema(schema, components) ?? schema;
 }
 
-function renderResponseType(
+function renderResponseDeclaration(
   typeName: string,
   operation: IROperation,
   options: TypesEmitterOptions,
@@ -294,6 +356,43 @@ function renderResponseType(
     createRenderContext(options, `${typeName}Response`, knownTypeImports)
   );
   return `export type ${typeName}Response = ${responseType};`;
+}
+
+function renderResponseType(
+  typeName: string,
+  operation: IROperation,
+  options: TypesEmitterOptions,
+  envelopeMode: EnvelopeMode,
+  knownTypeImports: Map<string, string | null>,
+  baseImportPath: string
+): string {
+  const schema = getSuccessResponseSchema(operation);
+  const response =
+    schema === undefined
+      ? operation.responses.find((candidate) =>
+          candidate.statusCode.startsWith("2")
+        )
+      : operation.responses.find((candidate) => candidate.schema === schema);
+  const schemaDocumentation =
+    schema === undefined
+      ? {}
+      : getSchemaTypeDoc(schema, options.source.components.schemas);
+  const documentation = combineTypeDoc(
+    [schemaDocumentation.description, response?.description],
+    operation.deprecated === true || schemaDocumentation.deprecated === true
+  );
+
+  return documentDeclaration(
+    renderResponseDeclaration(
+      typeName,
+      operation,
+      options,
+      envelopeMode,
+      knownTypeImports,
+      baseImportPath
+    ),
+    documentation
+  );
 }
 
 export interface GeneratedTypeFile {

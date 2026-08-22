@@ -20,6 +20,8 @@ import {
   getFunctionTypeName,
   hasMeaningfulRequestBody,
 } from "../../utils/type-names";
+import { renderTypeDoc } from "../tsdoc";
+import type { TypeDoc } from "../tsdoc";
 
 export interface FunctionsEmitterOptions {
   paths: Array<IRPath>;
@@ -114,6 +116,22 @@ export interface GeneratedFunctionFile {
   content: string;
 }
 
+function createTypeDoc(
+  description: string | undefined,
+  fallbackDescription: string | undefined,
+  deprecated = false
+): TypeDoc {
+  const documentation: TypeDoc = {};
+  const resolvedDescription = description ?? fallbackDescription;
+  if (resolvedDescription !== undefined) {
+    documentation.description = resolvedDescription;
+  }
+  if (deprecated) {
+    documentation.deprecated = true;
+  }
+  return documentation;
+}
+
 export function emitFunctionFiles(
   options: FunctionsEmitterOptions
 ): Array<GeneratedFunctionFile> {
@@ -192,11 +210,36 @@ function renderFunctionFile(
   );
   lines.push("");
 
+  lines.push(
+    ...renderTypeDoc(
+      createTypeDoc(
+        operation.description,
+        operation.summary,
+        operation.deprecated === true
+      )
+    )
+  );
   lines.push(`export interface ${propsTypeName} {`);
   if (options.httpMode === "injected") {
     lines.push("  http: HTTPFetch;");
   }
   for (const param of pathParams) {
+    const pathParam = operation.pathParams.find(
+      (entry) => entry.name === param
+    );
+    if (pathParam !== undefined) {
+      lines.push(
+        ...renderTypeDoc(
+          createTypeDoc(
+            pathParam.description,
+            pathParam.schema.description,
+            pathParam.deprecated === true ||
+              pathParam.schema.deprecated === true
+          ),
+          "  "
+        )
+      );
+    }
     lines.push(
       `  ${param}: ${renderOperationPathParamType(operation, pathParamSchemas, param)};`
     );
@@ -208,6 +251,18 @@ function renderFunctionFile(
     lines.push(`  params${optional}: ${typeName}Params;`);
   }
   if (hasRequestBody) {
+    const requestBody = operation.requestBody;
+    if (requestBody !== undefined) {
+      lines.push(
+        ...renderTypeDoc(
+          createTypeDoc(
+            requestBody.description,
+            requestBody.schema.description
+          ),
+          "  "
+        )
+      );
+    }
     lines.push(`  body: ${typeName}Body;`);
   }
   const configType = queryParamsPresent

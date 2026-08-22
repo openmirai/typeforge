@@ -1,5 +1,6 @@
 import type { IRSchema, IRSchemaProperty, IRSource } from "../parser/types";
 import { resolveObjectSchema, resolveRef } from "../emitters/resolve-schema";
+import { renderTypeDoc } from "../emitters/tsdoc";
 import { isSuccessStatusCode, schemaKindLabel } from "../utils/naming";
 
 export type EnvelopeMode = "shared" | "raw" | "mixed";
@@ -354,12 +355,27 @@ export function buildBaseResponseInterface(
 ): string {
   const lines = [`export interface BaseResponse<${genericName}> {`];
   for (const field of shape.fields) {
+    const property = shape.schema.properties?.[field.name];
+    if (property !== undefined) {
+      lines.push(
+        ...renderTypeDoc(
+          {
+            ...(property.schema.description === undefined
+              ? {}
+              : { description: property.schema.description }),
+            ...(property.schema.deprecated === true
+              ? { deprecated: true }
+              : {}),
+          },
+          "  "
+        )
+      );
+    }
     if (field.name === "data") {
       lines.push(`  data?: ${genericName};`);
       continue;
     }
     const optional = field.required ? "" : "?";
-    const property = shape.schema.properties?.[field.name];
     const type = formatEnvelopeFieldType(field, property, genericName);
     lines.push(`  ${field.name}${optional}: ${type};`);
   }

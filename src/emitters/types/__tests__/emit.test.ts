@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { emitTypeFiles } from "../index";
+import { emitBaseFile, emitTypeFiles } from "../index";
 import { analyzeEnvelope } from "../../../envelope-guard/index";
 import { parseSpec } from "../../../parser/index";
 
@@ -39,6 +39,11 @@ describe("emitTypeFiles", () => {
     expect(listType?.content).toContain('"data">');
     expect(listType?.content).toContain("success: boolean");
     expect(listType?.content).toContain("timestamp: string");
+    expect(listType?.content).toContain("Page number to return.");
+    expect(listType?.content).toContain("Display title; closes *\\/ safely.");
+    expect(emitBaseFile(analysis.shared!)).toContain(
+      "Whether the request succeeded."
+    );
   });
 
   it("preserves operation-specific fields beside envelope data", () => {
@@ -215,5 +220,97 @@ describe("emitTypeFiles", () => {
       typesDir: `${generatedRoot}/types`,
     });
     expect(pingFiles[0]?.content).toContain("Response = unknown");
+  });
+
+  it("emits OpenAPI descriptions as TypeScript doc comments", () => {
+    const source = parseSpec(
+      {
+        components: {
+          schemas: {
+            CreateWidget: {
+              description: "Fields accepted when creating a widget.",
+              properties: {
+                displayName: {
+                  description: "A human-readable name.\nClose */ safely.",
+                  type: "string",
+                },
+              },
+              required: ["displayName"],
+              type: "object",
+            },
+            Widget: {
+              description: "A widget returned by the API.",
+              properties: {
+                id: {
+                  description: "Stable widget identifier.",
+                  type: "string",
+                },
+                legacyName: {
+                  deprecated: true,
+                  description: "The former widget name.",
+                  type: "string",
+                },
+              },
+              required: ["id"],
+              type: "object",
+            },
+          },
+        },
+        info: { title: "t", version: "1" },
+        openapi: "3.0.0",
+        paths: {
+          "/api/acme/v3/widgets": {
+            post: {
+              deprecated: true,
+              parameters: [
+                {
+                  description: "Client-provided correlation key.",
+                  in: "query",
+                  name: "requestId",
+                  schema: { type: "string" },
+                },
+              ],
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/CreateWidget" },
+                  },
+                },
+                description: "Widget creation payload.",
+                required: true,
+              },
+              responses: {
+                "201": {
+                  content: {
+                    "application/json": {
+                      schema: { $ref: "#/components/schemas/Widget" },
+                    },
+                  },
+                  description: "Widget created.",
+                },
+              },
+            },
+          },
+        },
+      },
+      { pathPrefix: "/api/acme/v3" }
+    );
+
+    const files = emitTypeFiles({
+      baseFile: `${generatedRoot}/base.ts`,
+      envelopeMode: "raw",
+      source,
+      typesDir: `${generatedRoot}/types`,
+    });
+    const content = files[0]?.content ?? "";
+
+    expect(content).toContain("Client-provided correlation key.");
+    expect(content).toContain("Widget creation payload.");
+    expect(content).toContain("A human-readable name.");
+    expect(content).toContain("Close *\\/ safely.");
+    expect(content).toContain("A widget returned by the API.");
+    expect(content).toContain("Stable widget identifier.");
+    expect(content).toContain("The former widget name.");
+    expect(content.match(/@deprecated/g)).toHaveLength(4);
   });
 });

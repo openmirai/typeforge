@@ -42,11 +42,32 @@ function toCleanPath(pathStr: string): string {
 // Schema parsing
 // ---------------------------------------------------------------------------
 
+function readDescription(raw: JsonObject): string | undefined {
+  return typeof raw["description"] === "string"
+    ? raw["description"]
+    : undefined;
+}
+
+function applySchemaDocumentation(raw: JsonObject, schema: IRSchema): IRSchema {
+  const description = readDescription(raw);
+  if (description !== undefined) {
+    schema.description = description;
+  }
+  if (raw["deprecated"] === true) {
+    schema.deprecated = true;
+  }
+  return schema;
+}
+
 export function parseSchema(raw: JsonValue): IRSchema {
   if (!isJsonObject(raw)) {
     return { kind: "unknown" };
   }
 
+  return applySchemaDocumentation(raw, parseSchemaObject(raw));
+}
+
+function parseSchemaObject(raw: JsonObject): IRSchema {
   // $ref — preserve as named reference; no inline resolution avoids circular-ref loops
   if (typeof raw["$ref"] === "string") {
     return { kind: "ref", ref: extractRefName(raw["$ref"]) };
@@ -354,16 +375,32 @@ function parseOperation(
     }
 
     if (param["in"] === "path") {
-      pathParams.push({
+      const pathParam: IRPathParam = {
         name: param["name"],
         schema: resolveParamSchema(param, version),
-      });
+      };
+      const description = readDescription(param);
+      if (description !== undefined) {
+        pathParam.description = description;
+      }
+      if (param["deprecated"] === true) {
+        pathParam.deprecated = true;
+      }
+      pathParams.push(pathParam);
     } else if (param["in"] === "query") {
-      queryParams.push({
+      const queryParam: IRQueryParam = {
         name: param["name"],
         required: param["required"] === true,
         schema: resolveParamSchema(param, version),
-      });
+      };
+      const description = readDescription(param);
+      if (description !== undefined) {
+        queryParam.description = description;
+      }
+      if (param["deprecated"] === true) {
+        queryParam.deprecated = true;
+      }
+      queryParams.push(queryParam);
     }
   }
 
@@ -375,6 +412,16 @@ function parseOperation(
     operation: IROperation = { method, pathParams, queryParams, responses };
   if (typeof opRaw["operationId"] === "string") {
     operation.operationId = opRaw["operationId"];
+  }
+  if (typeof opRaw["summary"] === "string") {
+    operation.summary = opRaw["summary"];
+  }
+  const description = readDescription(opRaw);
+  if (description !== undefined) {
+    operation.description = description;
+  }
+  if (opRaw["deprecated"] === true) {
+    operation.deprecated = true;
   }
   if (requestBody !== undefined) {
     operation.requestBody = requestBody;
@@ -395,7 +442,15 @@ function parseSwagger2Body(
     ? parseSchema(bodyParam["schema"])
     : { kind: "unknown" as const };
 
-  return { required: bodyParam["required"] === true, schema };
+  const requestBody: IRRequestBody = {
+    required: bodyParam["required"] === true,
+    schema,
+  };
+  const description = readDescription(bodyParam);
+  if (description !== undefined) {
+    requestBody.description = description;
+  }
+  return requestBody;
 }
 
 function parseOpenAPI3Body(opRaw: JsonObject): IRRequestBody | undefined {
@@ -411,7 +466,15 @@ function parseOpenAPI3Body(opRaw: JsonObject): IRRequestBody | undefined {
       ? parseSchema(jsonContent["schema"])
       : { kind: "unknown" as const };
 
-  return { required: reqBodyRaw["required"] === true, schema };
+  const requestBody: IRRequestBody = {
+    required: reqBodyRaw["required"] === true,
+    schema,
+  };
+  const description = readDescription(reqBodyRaw);
+  if (description !== undefined) {
+    requestBody.description = description;
+  }
+  return requestBody;
 }
 
 function parseResponses(
@@ -429,7 +492,11 @@ function parseResponses(
       continue;
     }
 
-    const irResp: IRResponse = { statusCode };
+    const irResp: IRResponse = { statusCode },
+      description = readDescription(respRaw);
+    if (description !== undefined) {
+      irResp.description = description;
+    }
 
     if (version === "swagger2") {
       if (isJsonObject(respRaw["schema"])) {

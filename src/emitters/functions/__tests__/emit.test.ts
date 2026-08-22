@@ -38,6 +38,7 @@ describe("emitFunctionFiles", () => {
       "httpFetch.get<GETApiAcmeV3WidgetsResponse, GETApiAcmeV3WidgetsParams>(Routes.API_ACME_V3_WIDGETS, { ...config, params, signal });"
     );
     expect(file?.content).toContain("return data;");
+    expect(file?.content).toContain("List widgets.");
     expect(file?.content).not.toContain("Response | undefined");
     expect(file?.content).not.toMatch(/\bas\s+/);
   });
@@ -139,6 +140,7 @@ describe("emitFunctionFiles", () => {
     expect(itemFile?.content).toContain('from "../../../../../../runtime"');
     expect(itemFile?.content).not.toContain("/http");
     expect(itemFile?.content).not.toContain("/routes");
+    expect(itemFile?.content).toContain("Widget identifier.");
   });
 
   it("emits PUT and PATCH callers with typed bodies", () => {

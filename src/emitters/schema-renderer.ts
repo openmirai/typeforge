@@ -6,6 +6,8 @@ import { RecursiveRefError } from "./recursive-ref-error";
 import { refNameFromSchema, resolveRef } from "./resolve-schema";
 import { matchKnownType } from "../plugins/known-types/index";
 import type { KnownTypeRule } from "../plugins/known-types/index";
+import { renderTypeDoc } from "./tsdoc";
+import type { TypeDoc } from "./tsdoc";
 
 export interface SchemaRenderContext {
   components: Record<string, IRSchema>;
@@ -144,6 +146,40 @@ function childContext(
   };
 }
 
+/** Resolve documentation attached directly to a schema or inherited from a ref. */
+export function getSchemaTypeDoc(
+  schema: IRSchema,
+  components: Record<string, IRSchema>
+): TypeDoc {
+  const documentation: TypeDoc = {};
+  const visitedRefs = new Set<string>();
+  let current: IRSchema | undefined = schema;
+
+  while (current !== undefined) {
+    if (
+      documentation.description === undefined &&
+      current.description?.trim().length
+    ) {
+      documentation.description = current.description;
+    }
+    if (current.deprecated === true) {
+      documentation.deprecated = true;
+    }
+
+    if (
+      current.kind !== "ref" ||
+      current.ref === undefined ||
+      visitedRefs.has(current.ref)
+    ) {
+      break;
+    }
+    visitedRefs.add(current.ref);
+    current = components[current.ref];
+  }
+
+  return documentation;
+}
+
 export function renderSchemaType(
   schema: IRSchema,
   ctx: SchemaRenderContext
@@ -256,6 +292,12 @@ export function renderSchemaType(
         const type = renderSchemaType(
           property.schema,
           childContext(nextCtx, name)
+        );
+        lines.push(
+          ...renderTypeDoc(
+            getSchemaTypeDoc(property.schema, ctx.components),
+            indent(depth + 1)
+          )
         );
         lines.push(`${indent(depth + 1)}${name}${optional}: ${type};`);
       }

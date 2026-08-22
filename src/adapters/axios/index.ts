@@ -33,6 +33,7 @@ function mapResponse<TResponse, TParams extends object>(
   };
 }
 
+/** Create an `HTTPFetch` implementation backed by an Axios instance. */
 export function createAxiosAdapter(instance: AxiosInstance): HTTPFetch {
   return {
     delete: <TResponse, TParams extends object = QueryParams>(

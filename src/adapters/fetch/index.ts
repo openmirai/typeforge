@@ -3,9 +3,13 @@ import { parseJson } from "../../json/types";
 import { coerceResponseData } from "../../http/validate";
 import type { HTTPFetch, HTTPFetchConfig } from "../../http/types";
 
+/** Options for the Fetch-based `HTTPFetch` adapter. */
 export interface FetchAdapterOptions {
+  /** Base URL prepended to every generated route. */
   baseURL?: string;
+  /** Headers included with every request unless overridden per request. */
   headers?: Record<string, string>;
+  /** Fetch implementation to use, such as a test double or platform polyfill. */
   fetch?: typeof fetch;
 }
 
@@ -75,6 +79,7 @@ async function request<TResponse, TParams extends object>(
   };
 }
 
+/** Create an `HTTPFetch` implementation backed by the Fetch API. */
 export function createFetchAdapter(
   options: FetchAdapterOptions = {}
 ): HTTPFetch {

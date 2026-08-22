@@ -5,8 +5,10 @@
     "/api/acme/v3/widgets": {
       "get": {
         "operationId": "listWidgets",
+        "summary": "List widgets.",
         "parameters": [
           {
+            "description": "Page number to return.",
             "in": "query",
             "name": "page",
             "schema": { "type": "integer" }
@@ -19,14 +21,20 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
+                    "success": {
+                      "description": "Whether the request succeeded.",
+                      "type": "boolean"
+                    },
                     "data": {
                       "type": "array",
                       "items": {
                         "type": "object",
                         "properties": {
                           "code": { "type": "string" },
-                          "title": { "type": "string" }
+                          "title": {
+                            "description": "Display title; closes */ safely.",
+                            "type": "string"
+                          }
                         },
                         "required": ["code", "title"]
                       }
@@ -45,6 +53,7 @@
       "get": {
         "parameters": [
           {
+            "description": "Widget identifier.",
             "in": "path",
             "name": "slug",
             "required": true,
