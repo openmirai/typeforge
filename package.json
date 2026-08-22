@@ -1,6 +1,6 @@
 {
   "name": "@openmirai/typeforge",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Typeforge: headless OpenAPI to TypeScript codegen CLI and HTTPFetch runtime",
   "homepage": "https://github.com/openmirai/typeforge#readme",
   "bugs": {
