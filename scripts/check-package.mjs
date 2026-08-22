@@ -1,4 +1,19 @@
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+
+const manifest = JSON.parse(readFileSync("package.json", "utf8"));
+const rootTypesPath = "./dist/index.d.ts";
+
+if (manifest.types !== rootTypesPath) {
+  throw new Error(
+    `package.json types must point to ${rootTypesPath}; received ${String(manifest.types)}`
+  );
+}
+if (manifest.exports?.["."]?.types !== rootTypesPath) {
+  throw new Error(
+    `package.json exports["."].types must point to ${rootTypesPath}`
+  );
+}
 
 const output = execFileSync(
   "npm",
@@ -17,6 +32,10 @@ const unexpected = paths.filter(
     path !== "README.md" && path !== "package.json" && !path.startsWith("dist/")
 );
 const sourceMaps = paths.filter((path) => path.endsWith(".map"));
+
+if (!paths.includes(rootTypesPath.slice(2))) {
+  throw new Error(`Package is missing its root declaration: ${rootTypesPath}`);
+}
 
 if (unexpected.length > 0) {
   throw new Error(`Unexpected package files: ${unexpected.join(", ")}`);
