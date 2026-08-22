@@ -74,13 +74,7 @@ export function resolveSpecSource(
   }
 
   // 4. Local override file
-  const defaultLocalPath = "./typeforge.local.json";
-  const legacyLocalPath = "./openapi-codegen.local.json";
-  const localPath =
-    opts.localOverridePath ??
-    (existsSync(defaultLocalPath) || !existsSync(legacyLocalPath)
-      ? defaultLocalPath
-      : legacyLocalPath);
+  const localPath = opts.localOverridePath ?? "./typeforge.local.json";
   if (existsSync(localPath)) {
     try {
       const localData = readJsonObject(readFileSync(localPath, "utf8")),

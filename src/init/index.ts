@@ -156,12 +156,10 @@ export function initProject(options: InitOptions): {
   const cwd = options.cwd ?? process.cwd();
   const layout = options.layout ?? "monolith";
   const configPath = resolve(cwd, "typeforge.json");
-  const legacyConfigPath = resolve(cwd, "openapi-codegen.json");
   const projectConfig = loadProjectConfig(cwd);
-  const apiRoot =
-    existsSync(configPath) || existsSync(legacyConfigPath)
-      ? (projectConfig.apiRoot ?? DEFAULT_API_ROOT)
-      : defaultApiRoot(layout);
+  const apiRoot = existsSync(configPath)
+    ? (projectConfig.apiRoot ?? DEFAULT_API_ROOT)
+    : defaultApiRoot(layout);
   const apiRootPath = resolve(cwd, apiRoot);
   const sourceDir = join(apiRootPath, options.sourceKey);
 
@@ -200,7 +198,7 @@ export function initProject(options: InitOptions): {
   }
 
   const configWritePath = resolve(cwd, "typeforge.json");
-  if (!existsSync(configWritePath) && !existsSync(legacyConfigPath)) {
+  if (!existsSync(configWritePath)) {
     const config: TypeforgeConfig = { apiRoot };
     writeFileSync(
       configWritePath,

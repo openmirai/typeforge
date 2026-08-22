@@ -34,7 +34,6 @@ export { defineSourceConfig } from "./config/define";
 export type {
   GenerationMode,
   NamingStrategy,
-  OpenApiCodegenConfig,
   TypeforgeConfig,
   QueryExtendsConfig,
   SourceConfig,

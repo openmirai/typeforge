@@ -33,7 +33,7 @@ function readPackageConfig(path: string): TypeforgeConfig {
 
   try {
     const raw = readJsonObject(readFileSync(path, "utf8"));
-    const typeforge = raw["typeforge"] ?? raw["openapiCodegen"];
+    const typeforge = raw["typeforge"];
     if (
       typeof typeforge !== "object" ||
       typeforge === null ||
@@ -201,15 +201,10 @@ function parseQueryExtends(content: string): QueryExtendsConfig | undefined {
 
 export function loadProjectConfig(cwd: string): TypeforgeConfig {
   const fromJson = readOptionalJson(resolve(cwd, "typeforge.json"));
-  const fromLegacyJson = readOptionalJson(resolve(cwd, "openapi-codegen.json"));
   const fromPackage = readPackageConfig(resolve(cwd, "package.json"));
 
   return {
-    apiRoot:
-      fromJson.apiRoot ??
-      fromLegacyJson.apiRoot ??
-      fromPackage.apiRoot ??
-      DEFAULT_API_ROOT,
+    apiRoot: fromJson.apiRoot ?? fromPackage.apiRoot ?? DEFAULT_API_ROOT,
   };
 }
 

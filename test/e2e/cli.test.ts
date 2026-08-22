@@ -79,29 +79,6 @@ describe("e2e cli init", () => {
       "// keep me"
     );
   });
-
-  it("uses legacy project config without writing a duplicate", () => {
-    const root = join(fixtureRoot, "layouts", `cli-init-legacy-${Date.now()}`);
-    tempRoots.push(root);
-    mkdirSync(root, { recursive: true });
-    writeFileSync(
-      join(root, "openapi-codegen.json"),
-      JSON.stringify({ apiRoot: "legacy/api" }),
-      "utf8"
-    );
-
-    const result = runCli(root, [
-      "init",
-      "--source",
-      "atlas",
-      "--client",
-      "fetch",
-    ]);
-
-    expect(result.exitCode).toBe(0);
-    expect(existsSync(join(root, "legacy/api/http.ts"))).toBe(true);
-    expect(existsSync(join(root, "typeforge.json"))).toBe(false);
-  });
 });
 
 describe("e2e cli generate", () => {

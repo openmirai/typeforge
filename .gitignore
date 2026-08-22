@@ -2,10 +2,8 @@ dist/
 node_modules/
 coverage/
 .typeforge/
-.openapi-codegen/
 test/fixtures/layouts/
 *.tsbuildinfo
 .tmp/
 typeforge.local.json
-openapi-codegen.local.json
 .env
