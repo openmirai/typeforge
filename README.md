@@ -321,3 +321,27 @@ Acquisition, validation, envelope acceptance and rendering finish for every sele
 source before any writes. Ordinary write errors roll back changed content and newly
 created directories. This is not a crash-recovery journal or a concurrent-writer lock;
 run one writer at a time. Checks only read, including on failure.
+
+## Releasing
+
+After owner approval, release from a clean `main` checkout containing the reviewed
+changes and tracking `origin/main`. Use the pinned Node/pnpm configuration and run:
+
+```sh
+rtk pnpm install --frozen-lockfile
+rtk pnpm verify
+rtk pnpm release minor --dry-run
+rtk pnpm release minor
+```
+
+Choose `patch`, `minor` or `major` for the approved scope. Let release-it update the
+version, create the release commit/tag and push them; do not pre-bump the manifest
+or manually create the release tag. The tag triggers the existing publish workflow,
+which verifies the package, publishes through npm Trusted Publishing and creates
+the GitHub release. Confirm workflow success and npm version, integrity and `gitHead`
+before updating consumers.
+
+If a version was already published or partially released, first reconcile the exact
+commit, tag and registry state. Use release-it's documented
+[`--no-increment` recovery](https://github.com/release-it/release-it#update-or-re-run-existing-releases)
+for that existing version. Preserve published tags and package contents.

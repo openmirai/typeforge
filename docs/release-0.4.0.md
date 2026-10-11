@@ -1,9 +1,15 @@
 # Typeforge 0.4.0 — release review
 
-Status: prepared locally, awaiting owner review before publication. No release tag,
-push, registry publication or GitHub release has been created. npm currently reports
-0.3.2; 0.4.0 is a minor release for the Git source API and stricter drift/ownership
-behavior. Existing local-file and URL source configuration remains supported.
+Status: published after owner approval on 11 October 2026. The initial release
+incorrectly used a manual tag/push instead of the repository's `pnpm release`
+entry point. The correction uses release-it's `--no-increment` recovery on `main`,
+preserving the published package and tag rather than rewriting release history.
+0.4.0 is a minor release for the Git source API and stricter drift/ownership behavior.
+Existing local-file and URL source configuration remains supported.
+
+- Published tag and npm `gitHead`: `a12e40c07a72f3bdcec7c687d46cf23f977132b8`.
+- [Release](https://github.com/openmirai/typeforge/releases/tag/v0.4.0).
+- [Successful verification and Trusted Publishing workflow](https://github.com/openmirai/typeforge/actions/runs/38122471838).
 
 ## Changes to review
 
@@ -33,21 +39,21 @@ source reads its unchanged config with zero ownership conflicts; adopting marker
 and newer 0.3.2 emitter documentation requires a normal generation. The inspected
 dashboard checkout uses a custom generator. Neither repository was changed.
 
-Constellation migration is prepared with the unchanged approved producer revision.
-It passed typecheck, API generation/check, build and seven tests including real local
-Gin/Vite. The temporary tarball has been removed at owner request; review uses an
-ignored local dependency link. Its registry lockfile must be updated from actual npm
-metadata after publication, then frozen-install verification repeated. No fake registry
-integrity or consumer wrapper is committed.
+Constellation migration is committed locally at `dc33ef3` with the unchanged approved
+producer revision. Its lockfile resolves published registry 0.4.0. Frozen installation,
+typecheck, API generation/check, build and seven tests including real local Gin/Vite
+pass. A fresh isolated copy also passed frozen installation and successful/failing
+read-only checks. No temporary tarball, source dependency link or consumer wrapper
+is required.
 
 ## Publication boundary
 
-Do not run `pnpm release` before owner review: the existing release-it configuration
-pushes by default. The existing publish workflow runs on version tags and uses npm
-Trusted Publishing. After explicit approval, use the repository release pipeline,
-confirm registry 0.4.0 metadata, update Constellation's dependency lockfile, and repeat
-frozen install plus native generation/check and consumer verification. Constellation's
-next delivery gate stays held throughout.
+For future releases, follow the [normal release procedure](../README.md#releasing).
+The existing release-it configuration pushes by default. The publish workflow runs
+on version tags and uses npm Trusted Publishing. An existing published version is
+recovered with `rtk pnpm release --no-increment --ci`; do not delete or recreate its
+tag, unpublish it, or bump a new version merely to repair release bookkeeping.
+Constellation's next delivery gate stays held throughout.
 
 Git commits must already exist locally. Historical obsolete files without ownership
 markers need one-time review; old output locations must remain configured until
