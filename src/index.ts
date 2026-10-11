@@ -32,6 +32,7 @@ export type { HTTPFetch, HTTPFetchConfig } from "./http/types";
 
 export { defineSourceConfig } from "./config/define";
 export type {
+  GitSpecSource,
   GenerationMode,
   NamingStrategy,
   TypeforgeConfig,

@@ -11,16 +11,19 @@ export type SpecSource =
   | { kind: "env"; varName: string }
   | { kind: "local-override"; path: string };
 
-export async function loadSpec(source: SpecSource): Promise<JsonValue> {
+export async function loadSpec(
+  source: SpecSource,
+  cwd = process.cwd()
+): Promise<JsonValue> {
   let filePath: string;
 
   switch (source.kind) {
     case "file": {
-      filePath = resolve(source.path);
+      filePath = source.path;
       break;
     }
     case "local-override": {
-      filePath = resolve(source.path);
+      filePath = source.path;
       break;
     }
     case "env": {
@@ -28,12 +31,21 @@ export async function loadSpec(source: SpecSource): Promise<JsonValue> {
       if (envValue === undefined) {
         throw new Error(`Environment variable ${source.varName} is not set`);
       }
-      filePath = resolve(envValue);
+      filePath = envValue;
       break;
     }
   }
 
-  const content = await readFile(filePath, "utf8");
+  if (/^https?:\/\//.test(filePath)) {
+    const response = await fetch(filePath, {
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!response.ok) {
+      throw new Error(`Spec acquisition failed: HTTP ${response.status}`);
+    }
+    return parseJson(await response.text());
+  }
+  const content = await readFile(resolve(cwd, filePath), "utf8");
   return parseJson(content);
 }
 

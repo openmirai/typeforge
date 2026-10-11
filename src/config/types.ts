@@ -45,6 +45,16 @@ export interface QueryExtendsConfig {
   sortImportPath?: string;
 }
 
+/** Exact Git object source. The repository is a local checkout or bare repository. */
+export interface GitSpecSource {
+  /** Repository path (project-relative or absolute), or a whole `${ENV_VAR}` reference. */
+  repository: string;
+  /** Full immutable commit object ID; branches, tags and abbreviated IDs are rejected. */
+  commit: string;
+  /** Repository-relative JSON spec path at that commit. */
+  path: string;
+}
+
 /** Generation settings exported by an API source's `source.ts` file. */
 export interface SourceConfig {
   /**
@@ -109,7 +119,7 @@ export interface SourceConfig {
    * Used as the default spec source when no --spec flag or env var is provided.
    * Example: "../mirai-core-api/cmd/admin/docs/swagger.json"
    */
-  spec?: string;
+  spec?: string | GitSpecSource;
 }
 
 /** Default project-relative API root. */

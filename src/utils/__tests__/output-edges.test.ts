@@ -2,10 +2,34 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
+import * as fs from "node:fs/promises";
 
 import { clearGeneratedDir, writeOutputFiles } from "../output";
 
 describe("output utils edge cases", () => {
+  it("rolls back content and new directories when a write fails", async () => {
+    const root = await mkdtemp(join(tmpdir(), "typeforge-rollback-"));
+    const existing = join(root, "existing.ts");
+    await writeFile(existing, "original");
+    const blocked = join(root, "blocked");
+    await mkdir(blocked);
+    await fs.chmod(blocked, 0o500);
+    try {
+      await expect(
+        writeOutputFiles([
+          { path: existing, content: "replacement" },
+          { path: join(root, "new/nested/output.ts"), content: "new" },
+          { path: join(blocked, "output.ts"), content: "blocked" },
+        ])
+      ).rejects.toThrow(/EACCES|EPERM/);
+      expect(await readFile(existing, "utf8")).toBe("original");
+      expect(await fs.readdir(root)).toEqual(["blocked", "existing.ts"]);
+    } finally {
+      await fs.chmod(blocked, 0o700);
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("preserves selected files when clearing generated output", async () => {
     const root = await mkdtemp(join(tmpdir(), "codegen-output-"));
     const generated = join(root, "generated");

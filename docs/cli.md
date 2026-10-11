@@ -95,3 +95,12 @@ export default defineSourceConfig({
 ```
 
 The CLI reads `source.ts` at generate time (including `defineSourceConfig(...)` wrappers). Use synthetic paths like `/api/acme/v3` in examples and tests.
+
+## Explicit Git source updates
+
+`typeforge update --source <key>` (or `--all`) accepts the immutable Git source
+configured in `source.ts`, writes its snapshot/provenance and generates outputs in
+the same operation. Edit the configured full commit ID and invoke `update` only
+when intentionally accepting another revision. Routine `generate` and `check`
+verify the recorded revision. See the README's pinned Git example and ownership
+migration notes. No output inventory or index file is used.

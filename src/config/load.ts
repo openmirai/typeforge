@@ -149,6 +149,26 @@ function parseSourceConfigContent(content: string): SourceConfig {
     config.spec = spec[1];
   }
 
+  const gitSpec = normalized.match(
+    /spec:\s*\{((?:"[^"\n]*"|'[^'\n]*'|[^}"'])*)\}/
+  )?.[1];
+  if (/spec:\s*\{/.test(normalized) && gitSpec === undefined) {
+    throw new Error("Invalid Git spec configuration");
+  }
+  if (gitSpec !== undefined) {
+    const read = (key: string): string | undefined =>
+      gitSpec.match(new RegExp(`${key}:\\s*["'\`]([^"'\`]+)["'\`]`))?.[1];
+    const repository = read("repository");
+    const commit = read("commit");
+    const path = read("path");
+    if (!repository || !commit || !path) {
+      throw new Error(
+        "Git spec requires literal repository, commit and path strings"
+      );
+    }
+    config.spec = { repository, commit, path };
+  }
+
   return config;
 }
 

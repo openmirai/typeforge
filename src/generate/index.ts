@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
 import {
@@ -31,6 +31,8 @@ import type { IRSource } from "../parser/types";
 import { loadTsconfigPaths } from "../utils/tsconfig-paths";
 import { writeOutputFiles } from "../utils/output";
 import type { OutputFile } from "../utils/output";
+import { acquireGitSpec } from "./acquisition";
+import { outputPath, planOwnership, stripOwnership } from "./ownership";
 
 export interface GenerateOptions {
   cwd?: string;
@@ -38,6 +40,8 @@ export interface GenerateOptions {
   specFlag?: string;
   check?: boolean;
   acceptBase?: boolean;
+  /** Explicitly accept the Git source configured in source.ts. */
+  update?: boolean;
 }
 
 export interface GenerateResult {
@@ -45,6 +49,8 @@ export interface GenerateResult {
   files: number;
   changed: Array<string>;
   check: boolean;
+  obsolete: Array<string>;
+  conflicts: Array<string>;
 }
 
 export interface GenerateContext {
@@ -154,7 +160,7 @@ function patchModelsBaseResponse(
   cwd: string,
   apiRoot: string,
   newInterface: string
-): void {
+): OutputFile | undefined {
   const modelsPath = resolve(cwd, apiRoot, "models.ts");
   if (!existsSync(modelsPath)) {
     return;
@@ -165,29 +171,54 @@ function patchModelsBaseResponse(
     /export\s+interface\s+BaseResponse\s*<[^>]*>\s*\{[\s\S]*?\}/,
     newInterface
   );
-  writeFileSync(modelsPath, patched, "utf8");
+  return { path: modelsPath, content: patched };
 }
 
-export async function generateForSource(
+export interface GenerationPlan {
+  files: Array<OutputFile>;
+  obsolete: Array<string>;
+  result: GenerateResult;
+}
+
+/** Prepare and validate all changes in memory before any filesystem mutations. */
+export async function prepareGeneration(
   options: GenerateOptions
-): Promise<GenerateResult> {
-  const cwd = options.cwd ?? process.cwd();
+): Promise<GenerationPlan> {
+  if (options.check && (options.acceptBase || options.update)) {
+    throw new Error("--check cannot be combined with --accept-base or update");
+  }
+  const cwd = resolve(options.cwd ?? process.cwd());
   const context = buildGenerateContext(cwd, options.sourceKey);
-  const specResolveOptions: {
-    snapshotPath: string;
-    specFlag?: string;
-    sourceConfigSpec?: string;
-  } = {
-    snapshotPath: context.snapshotPath,
-  };
-  if (options.specFlag !== undefined) {
-    specResolveOptions.specFlag = options.specFlag;
+  const specConfig = context.sourceConfig.spec;
+  let acquired: Array<OutputFile> = [];
+  let rawSpec;
+  if (typeof specConfig === "object") {
+    const envName = `OPENAPI_SPEC_${options.sourceKey.toUpperCase().replace(/-/g, "_")}`;
+    if (options.specFlag !== undefined || process.env[envName] !== undefined) {
+      throw new Error(
+        "Git provenance cannot be bypassed with --spec or OPENAPI_SPEC overrides"
+      );
+    }
+    const acquisition = acquireGitSpec(
+      cwd,
+      context.sourceDir,
+      specConfig,
+      options.update === true
+    );
+    rawSpec = acquisition.spec;
+    acquired = acquisition.files;
+  } else {
+    if (options.update) {
+      throw new Error("typeforge update requires a Git spec source");
+    }
+    const specSource = resolveSpecSource(options.sourceKey, {
+      snapshotPath: context.snapshotPath,
+      localOverridePath: resolve(cwd, "typeforge.local.json"),
+      ...(options.specFlag === undefined ? {} : { specFlag: options.specFlag }),
+      ...(specConfig === undefined ? {} : { sourceConfigSpec: specConfig }),
+    });
+    rawSpec = await loadSpec(specSource, cwd);
   }
-  if (context.sourceConfig.spec !== undefined) {
-    specResolveOptions.sourceConfigSpec = context.sourceConfig.spec;
-  }
-  const specSource = resolveSpecSource(options.sourceKey, specResolveOptions);
-  const rawSpec = await loadSpec(specSource);
 
   const parseOptions: {
     ignorePaths?: Array<string>;
@@ -213,6 +244,7 @@ export async function generateForSource(
 
   const analysis = analyzeEnvelope(source);
   const outputFiles: Array<OutputFile> = [];
+  const auxiliaryFiles: Array<OutputFile> = [...acquired];
 
   const primaryEnvelope = getPrimaryEnvelopeShape(analysis);
   if (primaryEnvelope !== undefined) {
@@ -222,11 +254,14 @@ export async function generateForSource(
     });
 
     if (options.acceptBase === true) {
-      patchModelsBaseResponse(
+      const patch = patchModelsBaseResponse(
         cwd,
         context.apiRoot,
         buildBaseResponseInterface(primaryEnvelope)
       );
+      if (patch) {
+        auxiliaryFiles.push(patch);
+      }
     }
   }
 
@@ -292,7 +327,7 @@ export async function generateForSource(
     existsSync(context.routesFile)
   ) {
     finalRoutes = mergeRoutesFile(
-      readFileSync(context.routesFile, "utf8"),
+      stripOwnership(readFileSync(context.routesFile, "utf8")),
       routesContent,
       routeEnumName,
       context.sourceConfig.pathPrefix
@@ -336,12 +371,49 @@ export async function generateForSource(
     });
   }
 
-  const result = await writeOutputFiles(outputFiles, options.check === true);
-
+  const ownership = planOwnership(
+    cwd,
+    context.sourceDir,
+    [
+      context.generatedDir,
+      context.functionsDir,
+      context.typesDir,
+      context.baseFile,
+    ],
+    outputFiles,
+    context.sourceConfig.generationMode === "merge",
+    context.routesFile
+  );
+  for (const file of auxiliaryFiles) {
+    outputPath(cwd, file.path);
+  }
+  if (!options.check && ownership.conflicts.length > 0) {
+    throw new Error(
+      `Refusing to overwrite unowned files or delete edited obsolete files:\n${ownership.conflicts.join("\n")}`
+    );
+  }
+  const files = [...ownership.files, ...auxiliaryFiles];
+  const comparison = await writeOutputFiles(files, true, ownership.obsolete);
   return {
-    changed: result.changed,
-    check: options.check === true,
-    files: outputFiles.length,
-    sourceKey: options.sourceKey,
+    files,
+    obsolete: ownership.obsolete,
+    result: {
+      changed: [...new Set([...comparison.changed, ...ownership.conflicts])],
+      check: options.check === true,
+      files: outputFiles.length,
+      sourceKey: options.sourceKey,
+      obsolete: ownership.obsolete,
+      conflicts: ownership.conflicts,
+    },
   };
+}
+
+export async function generateForSource(
+  options: GenerateOptions
+): Promise<GenerateResult> {
+  const plan = await prepareGeneration(options);
+  if (!options.check) {
+    await writeOutputFiles(plan.files, false, plan.obsolete);
+  }
+  return plan.result;
 }

@@ -262,3 +262,62 @@ pnpm verify   # format, lint, typecheck, build, coverage
 ```
 
 Test layout: [test/README.md](test/README.md).
+
+## Pinned Git specs and drift
+
+`spec` still accepts a project-relative file path or HTTP(S) URL. For a pinned
+producer, configure a local checkout or bare repository (no sibling layout required):
+
+```ts
+export default defineSourceConfig({
+  spec: {
+    repository: "${API_REPOSITORY}",
+    commit: "0123456789abcdef0123456789abcdef01234567",
+    path: "docs/openapi.json",
+  },
+  generationMode: "authoritative",
+});
+```
+
+Set `API_REPOSITORY` to an absolute repository path on each machine; a literal
+project-relative or absolute path also works. Use a full commit object ID, never
+a branch, tag or abbreviated revision. Typeforge reads the commit's blob without
+consulting the working tree, following replacement objects, fetching or checking out.
+The repository must already contain the commit, including in CI.
+
+- `typeforge update --source api`: explicitly accept the configured Git revision,
+  validate and generate, then write `spec.json` and `typeforge.provenance.json`.
+- `typeforge generate --source api`: verify the configured source and raw/canonical
+  SHA-256 hashes against the receipt and generate from that exact commit. This can
+  repair the local snapshot, but cannot silently accept a different source revision.
+- `typeforge generate --all --check` (or `typeforge check --source api`): report
+  spec, provenance and output drift, exiting nonzero without creating directories,
+  writing, updating receipts or deleting files. `--accept-base` and `update` cannot
+  be combined with `--check`, including through the programmatic API.
+
+Review and commit the source configuration, snapshot, receipt and generated files
+when accepting a revision. The hashes verify content integrity against the configured
+Git object; they are not signatures or a trust decision about the producer. Git sources
+reject `--spec` and `OPENAPI_SPEC_*` overrides so they cannot bypass provenance.
+Existing string sources retain their CLI/environment/local override resolution.
+
+Ownership is recorded in one comment on each generated file, with its source identity
+and content hash. **No inventory, barrel or index file is created.** Authoritative
+mode scans the configured output locations and removes only obsolete files marked
+for that source whose contents still match their marker. Handwritten files and other
+sources' outputs are preserved. Edited obsolete files and unowned output collisions
+fail before writes; review them explicitly instead of losing manual changes.
+Merge mode retains obsolete endpoint files and existing extra route entries.
+
+On upgrading an existing project, generate once against its existing spec to adopt
+legacy outputs identified by Typeforge’s exact generated banner and endpoint path,
+or byte-identical outputs. A check reports the missing markers until then. Files
+that are already obsolete and have no ownership marker cannot safely be attributed
+to Typeforge; review those once manually. If moving output directories, clean the old
+owned outputs before changing their locations. Removing ownership markers relinquishes
+ownership; Typeforge never guesses from a filename or extension.
+
+Acquisition, validation, envelope acceptance and rendering finish for every selected
+source before any writes. Ordinary write errors roll back changed content and newly
+created directories. This is not a crash-recovery journal or a concurrent-writer lock;
+run one writer at a time. Checks only read, including on failure.

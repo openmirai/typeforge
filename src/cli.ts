@@ -2,10 +2,11 @@
 import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { listSourceKeys, loadProjectConfig } from "./config/load";
-import { generateForSource } from "./generate/index";
-import type { GenerateOptions } from "./generate/index";
+import { prepareGeneration } from "./generate/index";
+import type { GenerateOptions, GenerationPlan } from "./generate/index";
 import { initProject } from "./init/index";
 import type { InitOptions } from "./init/index";
+import { writeOutputFiles } from "./utils/output";
 
 interface ParsedArgs {
   command?: string;
@@ -123,6 +124,7 @@ Usage:
   typeforge init --source <key> --client axios|fetch|custom [--layout monolith|packages]
   typeforge generate --source <key> [--source <key2> ...] [--spec <path>] [--check] [--accept-base]
   typeforge generate --all [--check] [--accept-base]
+  typeforge update --source <key>  (explicitly accept the configured Git revision)
   typeforge check --source <key> [--spec <path>]
   typeforge accept-base --source <key> [--spec <path>]
 
@@ -135,9 +137,12 @@ Multi-source generate:
 }
 
 async function runGenerate(args: ParsedArgs): Promise<number> {
-  if (args.check === true && args.acceptBase === true) {
+  if (
+    args.check === true &&
+    (args.acceptBase === true || args.command === "update")
+  ) {
     process.stderr.write(
-      "typeforge: --accept-base is not allowed with --check\n"
+      "typeforge: --accept-base and update are not allowed with --check\n"
     );
     return 1;
   }
@@ -160,6 +165,7 @@ async function runGenerate(args: ParsedArgs): Promise<number> {
   }
 
   let exitCode = 0;
+  const plans: Array<GenerationPlan> = [];
   for (const sourceKey of sources) {
     try {
       const generateOptions: GenerateOptions = { sourceKey };
@@ -173,24 +179,32 @@ async function runGenerate(args: ParsedArgs): Promise<number> {
         generateOptions.specFlag = args.spec;
       }
 
-      const result = await generateForSource(generateOptions);
+      if (args.command === "update") {
+        generateOptions.update = true;
+      }
+      const plan = await prepareGeneration(generateOptions);
+      plans.push(plan);
+      const result = plan.result;
 
       if (args.check === true) {
         if (result.changed.length > 0) {
           process.stderr.write(
-            `typeforge: stale generated files for "${sourceKey}":\n`
+            `typeforge: stale spec/provenance or generated-output drift for "${sourceKey}":\n`
           );
           for (const file of result.changed) {
-            process.stderr.write(`  ${file}\n`);
+            let kind = "missing/changed";
+            if (result.obsolete.includes(file)) {
+              kind = "obsolete";
+            }
+            if (result.conflicts.includes(file)) {
+              kind = "ownership conflict";
+            }
+            process.stderr.write(`  ${kind}: ${file}\n`);
           }
           exitCode = 1;
         } else {
           process.stdout.write(`typeforge: "${sourceKey}" is up to date\n`);
         }
-      } else {
-        process.stdout.write(
-          `typeforge: generated ${result.files} files for "${sourceKey}" (${result.changed.length} changed)\n`
-        );
       }
     } catch (error) {
       exitCode = 1;
@@ -199,6 +213,18 @@ async function runGenerate(args: ParsedArgs): Promise<number> {
     }
   }
 
+  if (exitCode === 0 && args.check !== true) {
+    await writeOutputFiles(
+      plans.flatMap((plan) => plan.files),
+      false,
+      plans.flatMap((plan) => plan.obsolete)
+    );
+    for (const { result } of plans) {
+      process.stdout.write(
+        `typeforge: generated ${result.files} files for "${result.sourceKey}" (${result.changed.length} changed, ${result.obsolete.length} obsolete removed)\n`
+      );
+    }
+  }
   return exitCode;
 }
 
@@ -242,6 +268,7 @@ async function main(): Promise<void> {
 
   if (
     args.command === "generate" ||
+    args.command === "update" ||
     args.command === "check" ||
     args.command === "accept-base"
   ) {
