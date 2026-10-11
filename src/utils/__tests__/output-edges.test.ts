@@ -7,25 +7,24 @@ import * as fs from "node:fs/promises";
 import { clearGeneratedDir, writeOutputFiles } from "../output";
 
 describe("output utils edge cases", () => {
-  it("rolls back content and new directories when a write fails", async () => {
+  it("rolls back content and new directories when an output parent conflicts", async () => {
     const root = await mkdtemp(join(tmpdir(), "typeforge-rollback-"));
     const existing = join(root, "existing.ts");
     await writeFile(existing, "original");
     const blocked = join(root, "blocked");
-    await mkdir(blocked);
-    await fs.chmod(blocked, 0o500);
     try {
       await expect(
         writeOutputFiles([
           { path: existing, content: "replacement" },
           { path: join(root, "new/nested/output.ts"), content: "new" },
+          // Creating this file makes the next output's parent invalid, even as root.
+          { path: blocked, content: "not a directory" },
           { path: join(blocked, "output.ts"), content: "blocked" },
         ])
-      ).rejects.toThrow(/EACCES|EPERM/);
+      ).rejects.toThrow("Output parent is not a directory");
       expect(await readFile(existing, "utf8")).toBe("original");
-      expect(await fs.readdir(root)).toEqual(["blocked", "existing.ts"]);
+      expect(await fs.readdir(root)).toEqual(["existing.ts"]);
     } finally {
-      await fs.chmod(blocked, 0o700);
       await rm(root, { recursive: true, force: true });
     }
   });

@@ -11,6 +11,13 @@ Existing local-file and URL source configuration remains supported.
 - [Release](https://github.com/openmirai/typeforge/releases/tag/v0.4.0).
 - [Successful verification and Trusted Publishing workflow](https://github.com/openmirai/typeforge/actions/runs/38122471838).
 
+Recovery completed with `rtk pnpm release --no-increment --no-git.commit --ci`.
+The commit step was already complete; skipping it avoided a release-it/Lefthook
+empty-commit error. Release-it retained the existing tag and pushed `main`.
+Main CI then exposed a permission-dependent rollback test on CodeBuild; its failure
+setup now uses a deterministic file/directory conflict. Published runtime code is
+unchanged.
+
 ## Changes to review
 
 - `spec` accepts `{ repository, commit, path }`; `repository` can be a path or a whole
