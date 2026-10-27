@@ -149,7 +149,7 @@ Re-exported types from the package root:
 | `routeEnumName` | Enum name (default `RouteTargets`) |
 | `generationMode` | `authoritative` (overwrite routes) or `merge` (keep extra enum members) |
 | `naming` | `path` or `operationId` for function names |
-| `queryExtends` | Fold page/limit/sort query params into shared pagination types |
+| `queryExtends` | Fold page/limit/sort query params into shared pagination types. Page and limit fold into `paginationTypeName` when both are present; sort field and direction fold into `sortTypeName<...>` when both are present and the sort field is a string enum. Every other query param, including a string sort field, stays inline |
 | `tanstackQuery` | Emit Query helpers when `query-scope.ts` exists |
 | `importBase` | Force import prefix for generated function files (overrides tsconfig aliases) |
 | `maxRenderDepth` / `resolveMapKeyRefs` | Schema renderer limits |

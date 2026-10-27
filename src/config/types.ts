@@ -35,11 +35,18 @@ export interface QueryExtendsConfig {
    * @defaultValue `"sortOrder"`
    */
   sortOrder?: string;
-  /** Shared type that replaces matching page and limit properties. */
+  /**
+   * Shared type that replaces the page and limit properties when an operation
+   * has both. Without it, both stay inline.
+   */
   paginationTypeName?: string;
   /** Module specifier from which the shared pagination type is imported. */
   paginationImportPath?: string;
-  /** Generic shared type that replaces matching sort properties. */
+  /**
+   * Generic shared type that replaces the sort field and direction properties
+   * when an operation has both and the sort field is a string enum (the enum
+   * becomes the type argument). Otherwise both stay inline.
+   */
   sortTypeName?: string;
   /** Module specifier from which the shared sort type is imported. */
   sortImportPath?: string;

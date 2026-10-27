@@ -138,15 +138,25 @@ function renderParamsInterface(
     (param) => param.name === sortOrderName
   );
 
-  const hasOffsetLimitQuery = hasPage && hasLimit;
-  const hasSortParams = sortByParam !== undefined && hasSortOrder;
+  // A query parameter leaves the interface body only when a shared type
+  // carries it. Page and limit fold into `paginationTypeName` when both are
+  // present. Sort field and direction fold into `sortTypeName<...>` when both
+  // are present and the sort field is a string enum (the shared type's
+  // generic). Any parameter that does not fold stays inline with its own type.
+  const foldsPagination =
+    hasPage && hasLimit && queryExtends?.paginationTypeName !== undefined;
+  const sortOptions = sortableValues(sortByParam);
+  const foldsSort =
+    hasSortOrder &&
+    sortOptions !== undefined &&
+    queryExtends?.sortTypeName !== undefined;
 
   const commonParamNames = new Set<string>(
     [
-      hasOffsetLimitQuery ? pageName : undefined,
-      hasOffsetLimitQuery ? limitName : undefined,
-      hasSortParams ? sortByName : undefined,
-      hasSortParams ? sortOrderName : undefined,
+      foldsPagination ? pageName : undefined,
+      foldsPagination ? limitName : undefined,
+      foldsSort ? sortByName : undefined,
+      foldsSort ? sortOrderName : undefined,
     ].filter((name): name is string => name !== undefined)
   );
 
@@ -156,15 +166,10 @@ function renderParamsInterface(
 
   const extendsParts: Array<string> = [];
   if (
-    hasSortParams &&
-    sortByParam !== undefined &&
-    sortByParam.schema.enum !== undefined &&
-    sortByParam.schema.enum.length > 0 &&
+    foldsSort &&
+    sortOptions !== undefined &&
     queryExtends?.sortTypeName !== undefined
   ) {
-    const sortOptions = [
-      ...new Set(sortByParam.schema.enum.map((value) => JSON.stringify(value))),
-    ].join(" | ");
     extendsParts.push(`${queryExtends.sortTypeName}<${sortOptions}>`);
     if (queryExtends.sortImportPath !== undefined) {
       knownTypeImports.set(
@@ -173,7 +178,7 @@ function renderParamsInterface(
       );
     }
   }
-  if (hasOffsetLimitQuery && queryExtends?.paginationTypeName !== undefined) {
+  if (foldsPagination && queryExtends?.paginationTypeName !== undefined) {
     extendsParts.push(queryExtends.paginationTypeName);
     if (queryExtends.paginationImportPath !== undefined) {
       knownTypeImports.set(
@@ -208,6 +213,22 @@ function renderParamsInterface(
 
   lines.push("}");
   return lines.join("\n");
+}
+
+/**
+ * The sort field's values as a type argument (`"name" | "createdAt"`), or
+ * `undefined` when the parameter is absent or is not a non-empty string enum.
+ */
+function sortableValues(param: IRQueryParam | undefined): string | undefined {
+  const values = param?.schema.enum;
+  if (
+    values === undefined ||
+    values.length === 0 ||
+    !values.every((value) => typeof value === "string")
+  ) {
+    return undefined;
+  }
+  return [...new Set(values.map((value) => JSON.stringify(value)))].join(" | ");
 }
 
 function appendQueryParam(
